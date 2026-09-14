@@ -1,1127 +1,2271 @@
 /* =========================================================
    STUDYINK
-   Notebook Engine
-   ========================================================= */
+   Main application
+========================================================= */
 
 "use strict";
+
 
 /* =========================================================
    STORAGE
 ========================================================= */
 
-const STORAGE_KEY = "studyink_documents_v2";
-const SETTINGS_KEY = "studyink_settings_v1";
-
-let documents = loadDocuments();
-let currentNotebookId = null;
-let currentPageId = null;
-let currentView = "documents";
-let saveTimer = null;
-let confirmCallback = null;
+const STORAGE_KEY = "studyink_notebooks_v1";
+const ACTIVE_BOOK_KEY = "studyink_active_notebook_v1";
 
 
 /* =========================================================
    DOM
 ========================================================= */
 
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => document.querySelectorAll(selector);
+const libraryView = document.getElementById("libraryView");
+const notebookView = document.getElementById("notebookView");
 
+const documentGrid = document.getElementById("documentGrid");
 
-/* Library */
+const newNotebookButton =
+  document.getElementById("newNotebook");
 
-const libraryView = $("#libraryView");
-const documentLibrary = $("#documentLibrary");
-const documentGrid = $("#documentGrid");
-const documentCount = $("#documentCount");
-const emptyState = $("#emptyState");
-const librarySearch = $("#librarySearch");
-const librarySearchInput = $("#librarySearchInput");
+const backButton =
+  document.getElementById("backButton");
 
+const renameButton =
+  document.getElementById("renameButton");
 
-/* Menus */
+const bookTitle =
+  document.getElementById("bookTitle");
 
-const newButton = $("#newButton");
-const newMenu = $("#newMenu");
-const createMenu = $("#createMenu");
-const closeCreateMenu = $("#closeCreateMenu");
+const canvas =
+  document.getElementById("canvas");
 
+const paper =
+  document.getElementById("paper");
 
-/* Search */
+const paperStage =
+  document.getElementById("paperStage");
 
-const searchButton = $("#searchButton");
-const searchPanel = $("#searchPanel");
-const globalSearch = $("#globalSearch");
-const searchResults = $("#searchResults");
+const textLayer =
+  document.getElementById("textLayer");
 
+const textInput =
+  document.getElementById("textInput");
 
-/* Settings */
+const pageSidebar =
+  document.getElementById("pageSidebar");
 
-const settingsButton = $("#settingsButton");
-const settingsPanel = $("#settingsPanel");
+const pageList =
+  document.getElementById("pageList");
 
+const pageIndicator =
+  document.getElementById("pageIndicator");
 
-/* Notebook */
+const addPage =
+  document.getElementById("addPage");
 
-const notebookView = $("#notebookView");
-const notebookBack = $("#notebookBack");
-const notebookTitle = $("#notebookTitle");
-const notebookTypeLabel = $("#notebookTypeLabel");
-const favoriteNotebook = $("#favoriteNotebook");
-const notebookMore = $("#notebookMore");
+const addPageTop =
+  document.getElementById("addPageTop");
 
-const pageList = $("#pageList");
-const pageCount = $("#pageCount");
-const addPageButton = $("#addPage");
-const duplicatePageButton = $("#duplicatePage");
-const deletePageButton = $("#deletePage");
+const pagesButton =
+  document.getElementById("pagesButton");
 
-const pageTitle = $("#pageTitle");
-const pageContent = $("#pageContent");
-const paperPageNumber = $("#paperPageNumber");
-const paperWordCount = $("#paperWordCount");
-const saveStatus = $("#saveStatus");
+const searchButton =
+  document.getElementById("searchButton");
 
-const backButton = $("#backButton");
+const searchOverlay =
+  document.getElementById("searchOverlay");
 
+const closeSearch =
+  document.getElementById("closeSearch");
 
-/* Misc */
+const searchInput =
+  document.getElementById("searchInput");
 
-const tabletCard = $("#tabletCard");
-const closeTabletCard = $("#closeTabletCard");
-const installApp = $("#installApp");
+const searchResults =
+  document.getElementById("searchResults");
 
-const toast = $("#toast");
+const saveStatus =
+  document.getElementById("saveStatus");
 
+const toast =
+  document.getElementById("toast");
 
-/* Confirm */
+const undoButton =
+  document.getElementById("undo");
 
-const confirmModal = $("#confirmModal");
-const confirmTitle = $("#confirmTitle");
-const confirmMessage = $("#confirmMessage");
-const confirmCancel = $("#confirmCancel");
-const confirmAccept = $("#confirmAccept");
+const redoButton =
+  document.getElementById("redo");
 
+const sizeDown =
+  document.getElementById("sizeDown");
 
-/* =========================================================
-   DEFAULT DATA
-========================================================= */
+const sizeUp =
+  document.getElementById("sizeUp");
 
-function createId(prefix = "id") {
-  return (
-    prefix +
-    "_" +
-    Date.now().toString(36) +
-    "_" +
-    Math.random().toString(36).slice(2, 9)
-  );
-}
+const sizeDisplay =
+  document.getElementById("sizeDisplay");
 
+const sizeMenu =
+  document.getElementById("sizeMenu");
 
-function createPage(title = "Seite 1") {
-  return {
-    id: createId("page"),
-    title,
-    content: "",
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  };
-}
-
-
-function createNotebook(title = "Mein Notizbuch") {
-  const firstPage = createPage("Seite 1");
-
-  return {
-    id: createId("notebook"),
-    title,
-    type: "notebook",
-    favorite: false,
-    trashed: false,
-    shared: false,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    pages: [firstPage]
-  };
-}
+const penPalette =
+  document.getElementById("penPalette");
 
 
 /* =========================================================
-   STORAGE FUNCTIONS
+   STATE
 ========================================================= */
 
-function loadDocuments() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+let notebooks = [];
+let activeNotebook = null;
+let activePageIndex = 0;
 
-    if (!saved) {
-      return [];
-    }
+let currentTool = "pen";
+let currentColor = "#111111";
+let currentSize = 3;
 
-    const parsed = JSON.parse(saved);
+let isDrawing = false;
 
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
+let currentStroke = null;
 
-    return parsed;
-  } catch (error) {
-    console.error("StudyInk: Fehler beim Laden:", error);
-    return [];
-  }
-}
+let undoStack = [];
+let redoStack = [];
 
+let textEditing = false;
 
-function saveDocuments() {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(documents)
-    );
-  } catch (error) {
-    console.error("StudyInk: Fehler beim Speichern:", error);
-    showToast("Speichern nicht möglich.");
-  }
-}
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function escapeHTML(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-
-function formatDate(timestamp) {
-  if (!timestamp) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  }).format(new Date(timestamp));
-}
-
-
-function getDocumentById(id) {
-  return documents.find((document) => document.id === id);
-}
-
-
-function getCurrentNotebook() {
-  return getDocumentById(currentNotebookId);
-}
-
-
-function getCurrentPage() {
-  const notebook = getCurrentNotebook();
-
-  if (!notebook) {
-    return null;
-  }
-
-  return notebook.pages.find(
-    (page) => page.id === currentPageId
-  );
-}
-
-
-function getTypeName(type) {
-  const types = {
-    notebook: "Notizbuch",
-    "quick-note": "Schnellnotiz",
-    text: "Text Document",
-    whiteboard: "Whiteboard",
-    folder: "Ordner",
-    image: "Bild"
-  };
-
-  return types[type] || "Dokument";
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
+let saveTimer = null;
 let toastTimer = null;
 
-function showToast(message) {
-  if (!toast) {
-    return;
-  }
 
-  toast.textContent = message;
-  toast.classList.add("show");
+/* =========================================================
+   CANVAS CONFIG
+========================================================= */
 
-  clearTimeout(toastTimer);
+const PAPER_WIDTH = 900;
+const PAPER_HEIGHT = 1165;
 
-  toastTimer = setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2400);
-}
+const DEVICE_PIXEL_RATIO =
+  Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
 
 
 /* =========================================================
-   PANELS
+   INITIALIZATION
 ========================================================= */
 
-function closePanels() {
-  newMenu?.classList.add("hidden");
-  createMenu?.classList.add("hidden");
-  searchPanel?.classList.add("hidden");
-  settingsPanel?.classList.add("hidden");
-}
+document.addEventListener("DOMContentLoaded", init);
 
 
-function toggleNewMenu() {
-  const isOpen = !newMenu.classList.contains("hidden");
+function init() {
 
-  closePanels();
+  loadNotebooks();
 
-  if (!isOpen) {
-    newMenu.classList.remove("hidden");
-  }
-}
+  setupCanvas();
 
+  setupEvents();
 
-function toggleCreateMenu() {
-  const isOpen = !createMenu.classList.contains("hidden");
-
-  closePanels();
-
-  if (!isOpen) {
-    createMenu.classList.remove("hidden");
-  }
-}
-
-
-/* =========================================================
-   VIEW SWITCHING
-========================================================= */
-
-function setActiveNavigation(view) {
-  $$(".nav-item").forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.view === view
-    );
-  });
-}
-
-
-function showLibrary(view = "documents") {
-  currentView = view;
-
-  libraryView.classList.remove("hidden");
-  notebookView.classList.add("hidden");
-
-  setActiveNavigation(view);
-
-  closePanels();
-
-  renderLibrary();
-}
-
-
-function showNotebook(notebookId) {
-  const notebook = getDocumentById(notebookId);
-
-  if (!notebook) {
-    showToast("Notizbuch wurde nicht gefunden.");
-    return;
+  if (notebooks.length === 0) {
+    createNotebook("Unbenanntes Notizbuch", true);
   }
 
-  currentNotebookId = notebook.id;
+  const storedActive =
+    localStorage.getItem(ACTIVE_BOOK_KEY);
 
-  if (
-    !notebook.pages ||
-    !Array.isArray(notebook.pages) ||
-    notebook.pages.length === 0
-  ) {
-    notebook.pages = [createPage("Seite 1")];
+  if (storedActive) {
+
+    const found =
+      notebooks.find(
+        book => book.id === storedActive
+      );
+
+    if (found) {
+      activeNotebook = found;
+    }
   }
 
-  currentPageId = notebook.pages[0].id;
-
-  libraryView.classList.add("hidden");
-  notebookView.classList.remove("hidden");
-
-  closePanels();
-
-  renderNotebook();
-
-  setTimeout(() => {
-    pageContent?.focus();
-  }, 100);
-}
-
-
-/* =========================================================
-   CREATE DOCUMENTS
-========================================================= */
-
-function createDocument(type) {
-  closePanels();
-
-  if (type === "notebook") {
-    createNewNotebook();
-    return;
+  if (!activeNotebook) {
+    activeNotebook = notebooks[0];
   }
 
-  if (type === "quick-note") {
-    createQuickNote();
-    return;
-  }
-
-  createGenericDocument(type);
-}
-
-
-function createNewNotebook() {
-  const notebook = createNotebook(
-    "Mein neues Notizbuch"
+  activePageIndex = Math.min(
+    activeNotebook.pages.length - 1,
+    activeNotebook.currentPage || 0
   );
 
-  documents.unshift(notebook);
+  showNotebook();
 
-  saveDocuments();
+  renderAll();
 
-  showNotebook(notebook.id);
-
-  notebookTitle.focus();
-  notebookTitle.select();
-
-  showToast("Notizbuch erstellt.");
-}
-
-
-function createQuickNote() {
-  const notebook = createNotebook("Schnellnotiz");
-
-  notebook.type = "quick-note";
-  notebook.pages[0].title = "Schnellnotiz";
-
-  documents.unshift(notebook);
-
-  saveDocuments();
-
-  showNotebook(notebook.id);
-
-  pageContent.focus();
-
-  showToast("Schnellnotiz erstellt.");
-}
-
-
-function createGenericDocument(type) {
-  const title = getTypeName(type);
-
-  const document = createNotebook(
-    "Mein " + title
+  window.addEventListener(
+    "resize",
+    resizeCanvas
   );
-
-  document.type = type;
-
-  documents.unshift(document);
-
-  saveDocuments();
-
-  showNotebook(document.id);
-
-  showToast(`${title} erstellt.`);
 }
 
 
 /* =========================================================
-   LIBRARY RENDERING
+   EVENTS
 ========================================================= */
 
-function renderLibrary() {
-  if (!documentGrid) {
-    return;
-  }
+function setupEvents() {
 
-  let visibleDocuments = [...documents];
+  /* Library */
 
-  if (currentView === "favorites") {
-    visibleDocuments = visibleDocuments.filter(
-      (document) =>
-        document.favorite &&
-        !document.trashed
+  if (newNotebookButton) {
+    newNotebookButton.addEventListener(
+      "click",
+      () => createNotebook()
     );
   }
 
-  if (currentView === "trash") {
-    visibleDocuments = visibleDocuments.filter(
-      (document) => document.trashed
-    );
-  }
 
-  if (currentView === "shared") {
-    visibleDocuments = visibleDocuments.filter(
-      (document) =>
-        document.shared &&
-        !document.trashed
-    );
-  }
+  /* Navigation */
 
-  if (
-    currentView === "documents"
-  ) {
-    visibleDocuments = visibleDocuments.filter(
-      (document) => !document.trashed
-    );
-  }
-
-  const searchTerm =
-    librarySearchInput?.value
-      .trim()
-      .toLowerCase() || "";
-
-  if (searchTerm) {
-    visibleDocuments = visibleDocuments.filter(
-      (document) =>
-        document.title
-          .toLowerCase()
-          .includes(searchTerm) ||
-        document.type
-          .toLowerCase()
-          .includes(searchTerm) ||
-        document.pages?.some((page) =>
-          `${page.title} ${page.content}`
-            .toLowerCase()
-            .includes(searchTerm)
-        )
-    );
-  }
-
-  visibleDocuments.sort(
-    (a, b) => b.updatedAt - a.updatedAt
+  backButton.addEventListener(
+    "click",
+    () => {
+      saveCurrentNotebook();
+      showLibrary();
+    }
   );
 
-  if (documentCount) {
-    const amount = visibleDocuments.length;
 
-    documentCount.textContent =
-      amount === 1
-        ? "1 Dokument"
-        : `${amount} Dokumente`;
-  }
+  renameButton.addEventListener(
+    "click",
+    renameNotebook
+  );
 
-  if (visibleDocuments.length === 0) {
-    documentLibrary?.classList.add("hidden");
 
-    if (emptyState) {
-      emptyState.classList.remove("hidden");
+  /* Pages */
 
-      const title =
-        emptyState.querySelector(".empty-title");
+  pagesButton.addEventListener(
+    "click",
+    togglePageSidebar
+  );
 
-      const subtitle =
-        emptyState.querySelector(".empty-subtitle");
+  addPage.addEventListener(
+    "click",
+    addNewPage
+  );
 
-      if (currentView === "favorites") {
-        if (title) {
-          title.textContent = "Keine Favoriten";
+  addPageTop.addEventListener(
+    "click",
+    addNewPage
+  );
+
+
+  /* Tools */
+
+  document
+    .querySelectorAll("[data-tool]")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const tool =
+            button.dataset.tool;
+
+          setTool(tool);
         }
+      );
 
-        if (subtitle) {
-          subtitle.textContent =
-            "Markiere ein Notizbuch mit einem Stern.";
-        }
-      } else if (currentView === "trash") {
-        if (title) {
-          title.textContent = "Papierkorb ist leer";
-        }
+    });
 
-        if (subtitle) {
-          subtitle.textContent =
-            "Gelöschte Dokumente erscheinen hier.";
-        }
-      } else if (currentView === "shared") {
-        if (title) {
-          title.textContent = "Noch nichts geteilt";
-        }
 
-        if (subtitle) {
-          subtitle.textContent =
-            "Geteilte Dokumente erscheinen hier.";
-        }
-      } else {
-        if (title) {
-          title.textContent = "Bereit zum Lernen?";
-        }
+  /* Colors */
 
-        if (subtitle) {
-          subtitle.textContent =
-            "Erstelle dein erstes Notizbuch.";
+  document
+    .querySelectorAll(".color")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const color =
+            button.dataset.color;
+
+          setColor(color);
         }
-      }
+      );
+
+    });
+
+
+  /* Size */
+
+  sizeDown.addEventListener(
+    "click",
+    () => changeSize(-1)
+  );
+
+  sizeUp.addEventListener(
+    "click",
+    () => changeSize(1)
+  );
+
+  sizeMenu.addEventListener(
+    "click",
+    showSizeMenu
+  );
+
+
+  /* History */
+
+  undoButton.addEventListener(
+    "click",
+    undo
+  );
+
+  redoButton.addEventListener(
+    "click",
+    redo
+  );
+
+
+  /* Search */
+
+  searchButton.addEventListener(
+    "click",
+    openSearch
+  );
+
+  closeSearch.addEventListener(
+    "click",
+    closeSearchDialog
+  );
+
+  searchInput.addEventListener(
+    "input",
+    performSearch
+  );
+
+
+  /* Canvas */
+
+  canvas.addEventListener(
+    "pointerdown",
+    handlePointerDown
+  );
+
+  canvas.addEventListener(
+    "pointermove",
+    handlePointerMove
+  );
+
+  canvas.addEventListener(
+    "pointerup",
+    handlePointerUp
+  );
+
+  canvas.addEventListener(
+    "pointercancel",
+    handlePointerUp
+  );
+
+  canvas.addEventListener(
+    "pointerleave",
+    handlePointerLeave
+  );
+
+
+  /* Keyboard */
+
+  document.addEventListener(
+    "keydown",
+    handleKeyboard
+  );
+
+}
+
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+function loadNotebooks() {
+
+  try {
+
+    const raw =
+      localStorage.getItem(STORAGE_KEY);
+
+    if (!raw) {
+      notebooks = [];
+      return;
     }
 
-    return;
+    notebooks =
+      JSON.parse(raw);
+
+    if (!Array.isArray(notebooks)) {
+      notebooks = [];
+    }
+
+  } catch (error) {
+
+    console.error(
+      "StudyInk: Speicher konnte nicht geladen werden.",
+      error
+    );
+
+    notebooks = [];
   }
-
-  emptyState?.classList.add("hidden");
-  documentLibrary?.classList.remove("hidden");
-
-  documentGrid.innerHTML = visibleDocuments
-    .map(renderDocumentCard)
-    .join("");
 }
 
 
-function renderDocumentCard(document) {
-  const pages = document.pages || [];
+function saveNotebooks() {
 
-  const preview =
-    pages
-      .map((page) => page.content || "")
-      .join(" ")
-      .trim() ||
-    "Noch keine Notizen.";
+  try {
 
-  const typeName = getTypeName(document.type);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(notebooks)
+    );
 
-  return `
-    <article
-      class="studyink-document"
-      data-document-id="${escapeHTML(document.id)}"
-    >
+    if (activeNotebook) {
 
-      <button
-        class="studyink-document-favorite ${
-          document.favorite ? "active" : ""
-        }"
-        type="button"
-        data-document-action="favorite"
-        data-document-id="${escapeHTML(document.id)}"
-        aria-label="Favorit"
-      >
-        ${document.favorite ? "★" : "☆"}
-      </button>
+      localStorage.setItem(
+        ACTIVE_BOOK_KEY,
+        activeNotebook.id
+      );
+    }
 
-      <span class="studyink-document-type">
-        ${escapeHTML(typeName)}
-      </span>
+    setSaveStatus("Gespeichert");
 
-      <h3 class="studyink-document-title">
-        ${escapeHTML(document.title)}
-      </h3>
+  } catch (error) {
 
-      <p class="studyink-document-preview">
-        ${escapeHTML(preview)}
-      </p>
+    console.error(
+      "StudyInk: Speichern fehlgeschlagen.",
+      error
+    );
 
-      <span class="studyink-document-date">
-        ${pages.length}
-        ${pages.length === 1 ? "Seite" : "Seiten"}
-        ·
-        ${formatDate(document.updatedAt)}
-      </span>
-
-      <div class="studyink-document-actions">
-
-        <button
-          type="button"
-          data-document-action="open"
-          data-document-id="${escapeHTML(document.id)}"
-        >
-          Öffnen
-        </button>
-
-        ${
-          document.trashed
-            ? `
-              <button
-                type="button"
-                data-document-action="restore"
-                data-document-id="${escapeHTML(document.id)}"
-              >
-                Wiederherstellen
-              </button>
-            `
-            : `
-              <button
-                type="button"
-                data-document-action="trash"
-                data-document-id="${escapeHTML(document.id)}"
-              >
-                Löschen
-              </button>
-            `
-        }
-
-      </div>
-
-    </article>
-  `;
-}
-
-
-/* =========================================================
-   DOCUMENT ACTIONS
-========================================================= */
-
-function toggleFavorite(id) {
-  const document = getDocumentById(id);
-
-  if (!document) {
-    return;
+    setSaveStatus("Speichern fehlgeschlagen");
   }
-
-  document.favorite = !document.favorite;
-  document.updatedAt = Date.now();
-
-  saveDocuments();
-  renderLibrary();
-
-  showToast(
-    document.favorite
-      ? "Zu Favoriten hinzugefügt."
-      : "Aus Favoriten entfernt."
-  );
 }
 
 
-function moveToTrash(id) {
-  const document = getDocumentById(id);
+function scheduleSave() {
 
-  if (!document) {
-    return;
-  }
-
-  document.trashed = true;
-  document.updatedAt = Date.now();
-
-  saveDocuments();
-  renderLibrary();
-
-  showToast("Dokument in den Papierkorb verschoben.");
-}
-
-
-function restoreDocument(id) {
-  const document = getDocumentById(id);
-
-  if (!document) {
-    return;
-  }
-
-  document.trashed = false;
-  document.updatedAt = Date.now();
-
-  saveDocuments();
-  renderLibrary();
-
-  showToast("Dokument wiederhergestellt.");
-}
-
-
-function permanentlyDelete(id) {
-  documents = documents.filter(
-    (document) => document.id !== id
-  );
-
-  saveDocuments();
-  renderLibrary();
-
-  showToast("Dokument endgültig gelöscht.");
-}
-
-
-/* =========================================================
-   NOTEBOOK RENDERING
-========================================================= */
-
-function renderNotebook() {
-  const notebook = getCurrentNotebook();
-
-  if (!notebook) {
-    showLibrary();
-    return;
-  }
-
-  notebookTitle.value = notebook.title;
-  notebookTypeLabel.textContent =
-    getTypeName(notebook.type).toUpperCase();
-
-  favoriteNotebook.textContent =
-    notebook.favorite ? "★" : "☆";
-
-  favoriteNotebook.classList.toggle(
-    "active",
-    notebook.favorite
-  );
-
-  renderPageList();
-  renderCurrentPage();
-}
-
-
-function renderPageList() {
-  const notebook = getCurrentNotebook();
-
-  if (!notebook) {
-    return;
-  }
-
-  const pages = notebook.pages || [];
-
-  pageCount.textContent =
-    pages.length === 1
-      ? "1 Seite"
-      : `${pages.length} Seiten`;
-
-  pageList.innerHTML = pages
-    .map((page, index) => {
-      const active =
-        page.id === currentPageId;
-
-      const preview =
-        page.content
-          ?.replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 65) ||
-        "Leere Seite";
-
-      return `
-        <button
-          class="page-list-item ${
-            active ? "active" : ""
-          }"
-          type="button"
-          data-page-id="${escapeHTML(page.id)}"
-        >
-
-          <span class="page-thumbnail">
-
-            <span class="page-number">
-              ${index + 1}
-            </span>
-
-            <span class="page-thumbnail-lines">
-              ${escapeHTML(preview)}
-            </span>
-
-          </span>
-
-          <span class="page-list-info">
-
-            <strong>
-              ${escapeHTML(
-                page.title || `Seite ${index + 1}`
-              )}
-            </strong>
-
-            <small>
-              ${page.content?.trim()
-                ? "Notizen vorhanden"
-                : "Leer"}
-            </small>
-
-          </span>
-
-        </button>
-      `;
-    })
-    .join("");
-}
-
-
-function renderCurrentPage() {
-  const page = getCurrentPage();
-  const notebook = getCurrentNotebook();
-
-  if (!page || !notebook) {
-    return;
-  }
-
-  const index = notebook.pages.findIndex(
-    (item) => item.id === page.id
-  );
-
-  pageTitle.value =
-    page.title || `Seite ${index + 1}`;
-
-  pageContent.value =
-    page.content || "";
-
-  paperPageNumber.textContent =
-    `Seite ${index + 1}`;
-
-  updateWordCount();
-}
-
-
-/* =========================================================
-   NOTEBOOK EDITING
-========================================================= */
-
-function updateCurrentPage() {
-  const notebook = getCurrentNotebook();
-  const page = getCurrentPage();
-
-  if (!notebook || !page) {
-    return;
-  }
-
-  page.title =
-    pageTitle.value.trim() ||
-    `Seite ${
-      notebook.pages.findIndex(
-        (item) => item.id === page.id
-      ) + 1
-    }`;
-
-  page.content = pageContent.value;
-
-  page.updatedAt = Date.now();
-  notebook.updatedAt = Date.now();
-
-  saveStatus.textContent = "Speichern...";
+  setSaveStatus("Speichert …");
 
   clearTimeout(saveTimer);
 
-  saveTimer = setTimeout(() => {
-    saveDocuments();
-
-    saveStatus.textContent = "Gespeichert";
-
-    renderPageList();
-  }, 350);
-
-  updateWordCount();
+  saveTimer =
+    setTimeout(
+      () => {
+        saveCurrentNotebook();
+      },
+      350
+    );
 }
 
 
-function updateWordCount() {
-  if (!paperWordCount) {
+function saveCurrentNotebook() {
+
+  if (!activeNotebook) {
     return;
   }
 
-  const text =
-    pageContent?.value.trim() || "";
+  activeNotebook.updatedAt =
+    new Date().toISOString();
 
-  if (!text) {
-    paperWordCount.textContent = "0 Wörter";
-    return;
-  }
+  activeNotebook.currentPage =
+    activePageIndex;
 
-  const words = text
-    .split(/\s+/)
-    .filter(Boolean);
-
-  paperWordCount.textContent =
-    words.length === 1
-      ? "1 Wort"
-      : `${words.length} Wörter`;
+  saveNotebooks();
 }
 
 
 /* =========================================================
-   ADD PAGE
+   NOTEBOOKS
 ========================================================= */
 
-function addPage() {
-  const notebook = getCurrentNotebook();
+function createNotebook(
+  name = null,
+  openImmediately = true
+) {
 
-  if (!notebook) {
-    return;
-  }
+  const now =
+    new Date().toISOString();
 
-  const pageNumber =
-    notebook.pages.length + 1;
+  const notebook = {
 
-  const page = createPage(
-    `Seite ${pageNumber}`
-  );
+    id:
+      "book_" +
+      Date.now() +
+      "_" +
+      Math.random()
+        .toString(36)
+        .slice(2),
 
-  notebook.pages.push(page);
+    name:
+      name ||
+      "Neues Notizbuch",
 
-  notebook.updatedAt = Date.now();
+    createdAt: now,
 
-  currentPageId = page.id;
+    updatedAt: now,
 
-  saveDocuments();
+    currentPage: 0,
 
-  renderNotebook();
-
-  setTimeout(() => {
-    pageTitle.focus();
-  }, 50);
-
-  showToast("Neue Seite erstellt.");
-}
-
-
-/* =========================================================
-   DUPLICATE PAGE
-========================================================= */
-
-function duplicateCurrentPage() {
-  const notebook = getCurrentNotebook();
-  const page = getCurrentPage();
-
-  if (!notebook || !page) {
-    return;
-  }
-
-  const newPage = {
-    ...page,
-    id: createId("page"),
-    title: `${page.title} Kopie`,
-    createdAt: Date.now(),
-    updatedAt: Date.now()
+    pages: [
+      createPage(1),
+      createPage(2)
+    ]
   };
 
-  const index =
-    notebook.pages.findIndex(
-      (item) => item.id === page.id
-    );
+  notebooks.unshift(notebook);
 
-  notebook.pages.splice(
-    index + 1,
-    0,
-    newPage
-  );
+  activeNotebook = notebook;
+  activePageIndex = 0;
 
-  notebook.updatedAt = Date.now();
+  saveNotebooks();
 
-  currentPageId = newPage.id;
+  if (openImmediately) {
+    showNotebook();
+    renderAll();
+  }
 
-  saveDocuments();
-  renderNotebook();
-
-  showToast("Seite dupliziert.");
+  showToast("Neues Notizbuch erstellt");
 }
 
 
-/* =========================================================
-   DELETE PAGE
-========================================================= */
+function createPage(number) {
 
-function requestDeletePage() {
-  const notebook = getCurrentNotebook();
+  return {
 
-  if (!notebook) {
-    return;
-  }
+    id:
+      "page_" +
+      Date.now() +
+      "_" +
+      Math.random()
+        .toString(36)
+        .slice(2),
 
-  if (notebook.pages.length <= 1) {
-    showToast(
-      "Ein Notizbuch muss mindestens eine Seite haben."
-    );
+    number,
 
-    return;
-  }
+    createdAt:
+      new Date().toISOString(),
 
-  openConfirm(
-    "Seite löschen?",
-    "Die aktuelle Seite wird dauerhaft gelöscht.",
-    deleteCurrentPage
-  );
+    strokes: [],
+
+    texts: []
+  };
 }
 
 
-function deleteCurrentPage() {
-  const notebook = getCurrentNotebook();
-
-  if (!notebook) {
-    return;
-  }
+function deleteNotebook(id) {
 
   const index =
-    notebook.pages.findIndex(
-      (page) => page.id === currentPageId
+    notebooks.findIndex(
+      book => book.id === id
     );
 
   if (index === -1) {
     return;
   }
 
-  notebook.pages.splice(index, 1);
+  const confirmed =
+    confirm(
+      "Dieses Notizbuch wirklich löschen?"
+    );
 
-  const nextPage =
-    notebook.pages[index] ||
-    notebook.pages[index - 1] ||
-    notebook.pages[0];
+  if (!confirmed) {
+    return;
+  }
 
-  currentPageId = nextPage.id;
+  notebooks.splice(index, 1);
 
-  notebook.updatedAt = Date.now();
+  if (notebooks.length === 0) {
 
-  saveDocuments();
-  renderNotebook();
+    activeNotebook = null;
 
-  showToast("Seite gelöscht.");
+    createNotebook(
+      "Unbenanntes Notizbuch",
+      false
+    );
+  }
+
+  activeNotebook =
+    notebooks[0];
+
+  activePageIndex = 0;
+
+  saveNotebooks();
+
+  renderLibrary();
 }
 
 
 /* =========================================================
-   NOTEBOOK TITLE
+   VIEWS
 ========================================================= */
 
-function updateNotebookTitle() {
-  const notebook = getCurrentNotebook();
+function showNotebook() {
 
-  if (!notebook) {
-    return;
-  }
+  libraryView.classList.add("hidden");
 
-  const title =
-    notebookTitle.value.trim();
+  notebookView.classList.remove("hidden");
+}
 
-  notebook.title =
-    title || "Mein Notizbuch";
 
-  notebook.updatedAt = Date.now();
+function showLibrary() {
 
-  saveDocuments();
+  notebookView.classList.add("hidden");
 
-  saveStatus.textContent = "Gespeichert";
+  libraryView.classList.remove("hidden");
+
+  renderLibrary();
 }
 
 
 /* =========================================================
-   FAVORITE NOTEBOOK
+   LIBRARY
 ========================================================= */
 
-function toggleCurrentFavorite() {
-  const notebook = getCurrentNotebook();
+function renderLibrary() {
 
-  if (!notebook) {
+  documentGrid.innerHTML = "";
+
+  if (notebooks.length === 0) {
+
+    const empty =
+      document.createElement("div");
+
+    empty.textContent =
+      "Noch keine Notizbücher.";
+
+    documentGrid.appendChild(empty);
+
     return;
   }
 
-  notebook.favorite = !notebook.favorite;
-  notebook.updatedAt = Date.now();
 
-  favoriteNotebook.textContent =
-    notebook.favorite ? "★" : "☆";
+  notebooks.forEach(
+    notebook => {
 
-  favoriteNotebook.classList.toggle(
-    "active",
-    notebook.favorite
+      const card =
+        document.createElement("article");
+
+      card.className =
+        "document-card";
+
+
+      const preview =
+        document.createElement("div");
+
+      preview.className =
+        "document-preview";
+
+
+      const title =
+        document.createElement("div");
+
+      title.className =
+        "document-title";
+
+      title.textContent =
+        notebook.name;
+
+
+      const meta =
+        document.createElement("div");
+
+      meta.className =
+        "document-meta";
+
+      meta.textContent =
+        `${notebook.pages.length} Seiten`;
+
+
+      card.appendChild(preview);
+      card.appendChild(title);
+      card.appendChild(meta);
+
+
+      card.addEventListener(
+        "click",
+        () => {
+
+          activeNotebook =
+            notebook;
+
+          activePageIndex =
+            notebook.currentPage || 0;
+
+          showNotebook();
+
+          renderAll();
+
+          saveNotebooks();
+        }
+      );
+
+
+      documentGrid.appendChild(card);
+
+    }
   );
+}
 
-  saveDocuments();
+
+/* =========================================================
+   RENDER ALL
+========================================================= */
+
+function renderAll() {
+
+  if (!activeNotebook) {
+    return;
+  }
+
+  bookTitle.textContent =
+    activeNotebook.name;
+
+  renderPages();
+
+  renderTextLayer();
+
+  resizeCanvas();
+
+  redrawCanvas();
+
+  updatePageIndicator();
+
+  updateHistoryButtons();
+}
+
+
+/* =========================================================
+   PAGE MANAGEMENT
+========================================================= */
+
+function renderPages() {
+
+  pageList.innerHTML = "";
+
+  activeNotebook.pages.forEach(
+    (page, index) => {
+
+      const thumb =
+        document.createElement("div");
+
+      thumb.className =
+        "page-thumb";
+
+      if (index === activePageIndex) {
+        thumb.classList.add("active");
+      }
+
+
+      const miniPaper =
+        document.createElement("div");
+
+      miniPaper.className =
+        "page-thumb-paper";
+
+
+      const number =
+        document.createElement("div");
+
+      number.className =
+        "page-number";
+
+      number.textContent =
+        index + 1;
+
+
+      thumb.appendChild(miniPaper);
+      thumb.appendChild(number);
+
+
+      thumb.addEventListener(
+        "click",
+        () => selectPage(index)
+      );
+
+
+      pageList.appendChild(thumb);
+
+    }
+  );
+}
+
+
+function selectPage(index) {
+
+  if (
+    index < 0 ||
+    index >= activeNotebook.pages.length
+  ) {
+    return;
+  }
+
+  finishTextEditing();
+
+  activePageIndex = index;
+
+  activeNotebook.currentPage =
+    index;
+
+  undoStack = [];
+  redoStack = [];
+
+  renderAll();
+
+  scheduleSave();
+}
+
+
+function addNewPage() {
+
+  finishTextEditing();
+
+  const page =
+    createPage(
+      activeNotebook.pages.length + 1
+    );
+
+  activeNotebook.pages.push(page);
+
+  activePageIndex =
+    activeNotebook.pages.length - 1;
+
+  undoStack = [];
+  redoStack = [];
+
+  renderAll();
+
+  scheduleSave();
 
   showToast(
-    notebook.favorite
-      ? "Notizbuch favorisiert."
-      : "Favorit entfernt."
+    `Seite ${activePageIndex + 1} erstellt`
   );
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+function togglePageSidebar() {
+
+  pageSidebar.classList.toggle("open");
+
+}
+
+
+/* =========================================================
+   PAGE INDICATOR
+========================================================= */
+
+function updatePageIndicator() {
+
+  pageIndicator.textContent =
+    `${activePageIndex + 1} von ${activeNotebook.pages.length}`;
+}
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+function setupCanvas() {
+
+  resizeCanvas();
+
+}
+
+
+function resizeCanvas() {
+
+  if (!canvas || !paper) {
+    return;
+  }
+
+  const rect =
+    paper.getBoundingClientRect();
+
+  if (
+    rect.width <= 0 ||
+    rect.height <= 0
+  ) {
+    return;
+  }
+
+  const scaleX =
+    rect.width / PAPER_WIDTH;
+
+  const scaleY =
+    rect.height / PAPER_HEIGHT;
+
+
+  canvas.width =
+    Math.round(
+      PAPER_WIDTH *
+      DEVICE_PIXEL_RATIO
+    );
+
+  canvas.height =
+    Math.round(
+      PAPER_HEIGHT *
+      DEVICE_PIXEL_RATIO
+    );
+
+
+  canvas.style.width =
+    `${rect.width}px`;
+
+  canvas.style.height =
+    `${rect.height}px`;
+
+
+  const ctx =
+    canvas.getContext("2d");
+
+  ctx.setTransform(
+    DEVICE_PIXEL_RATIO,
+    0,
+    0,
+    DEVICE_PIXEL_RATIO,
+    0,
+    0
+  );
+
+  redrawCanvas();
+
+}
+
+
+function getCanvasPosition(event) {
+
+  const rect =
+    canvas.getBoundingClientRect();
+
+  const x =
+    (
+      (event.clientX - rect.left) /
+      rect.width
+    ) *
+    PAPER_WIDTH;
+
+  const y =
+    (
+      (event.clientY - rect.top) /
+      rect.height
+    ) *
+    PAPER_HEIGHT;
+
+  return {
+    x,
+    y
+  };
+}
+
+
+/* =========================================================
+   DRAWING
+========================================================= */
+
+function handlePointerDown(event) {
+
+  if (
+    currentTool === "text"
+  ) {
+
+    createTextAtPointer(event);
+
+    return;
+  }
+
+
+  if (
+    currentTool === "lasso"
+  ) {
+
+    return;
+  }
+
+
+  if (
+    currentTool === "shapes"
+  ) {
+
+    startShape(event);
+
+    return;
+  }
+
+
+  event.preventDefault();
+
+  canvas.setPointerCapture(
+    event.pointerId
+  );
+
+  const point =
+    getCanvasPosition(event);
+
+  isDrawing = true;
+
+  currentStroke = {
+
+    tool:
+      currentTool,
+
+    color:
+      currentColor,
+
+    size:
+      currentSize,
+
+    opacity:
+      currentTool === "highlighter"
+        ? 0.28
+        : 1,
+
+    points: [
+      point
+    ]
+  };
+
+  drawCurrentStroke();
+
+}
+
+
+function handlePointerMove(event) {
+
+  if (!isDrawing) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const point =
+    getCanvasPosition(event);
+
+  currentStroke.points.push(
+    point
+  );
+
+  drawCurrentStroke();
+
+}
+
+
+function handlePointerUp(event) {
+
+  if (!isDrawing) {
+    return;
+  }
+
+  isDrawing = false;
+
+  try {
+    canvas.releasePointerCapture(
+      event.pointerId
+    );
+  } catch (_) {}
+
+
+  if (
+    currentStroke &&
+    currentStroke.points.length > 1
+  ) {
+
+    const page =
+      getCurrentPage();
+
+    page.strokes.push(
+      currentStroke
+    );
+
+    pushHistory();
+
+    scheduleSave();
+  }
+
+
+  currentStroke = null;
+
+}
+
+
+function handlePointerLeave() {
+
+  /*
+   * Absichtlich leer.
+   * Pointer Capture übernimmt das Zeichnen,
+   * wenn der Finger/Mauszeiger das Canvas verlässt.
+   */
+
+}
+
+
+/* =========================================================
+   DRAW CURRENT STROKE
+========================================================= */
+
+function drawCurrentStroke() {
+
+  if (!currentStroke) {
+    return;
+  }
+
+  const ctx =
+    canvas.getContext("2d");
+
+  ctx.save();
+
+  ctx.setTransform(
+    DEVICE_PIXEL_RATIO,
+    0,
+    0,
+    DEVICE_PIXEL_RATIO,
+    0,
+    0
+  );
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  ctx.globalAlpha =
+    currentStroke.opacity;
+
+  if (
+    currentStroke.tool === "eraser"
+  ) {
+
+    ctx.globalCompositeOperation =
+      "destination-out";
+
+    ctx.strokeStyle =
+      "rgba(0,0,0,1)";
+
+    ctx.lineWidth =
+      currentStroke.size * 4;
+
+  } else {
+
+    ctx.globalCompositeOperation =
+      "source-over";
+
+    ctx.strokeStyle =
+      currentStroke.color;
+
+    ctx.lineWidth =
+      currentStroke.size *
+      (
+        currentStroke.tool === "highlighter"
+          ? 4
+          : 1
+      );
+
+  }
+
+
+  const points =
+    currentStroke.points;
+
+  if (points.length === 1) {
+
+    const p =
+      points[0];
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,
+      p.y,
+      ctx.lineWidth / 2,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fillStyle =
+      currentStroke.color;
+
+    ctx.fill();
+
+  } else {
+
+    const a =
+      points[points.length - 2];
+
+    const b =
+      points[points.length - 1];
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      a.x,
+      a.y
+    );
+
+    ctx.lineTo(
+      b.x,
+      b.y
+    );
+
+    ctx.stroke();
+
+  }
+
+  ctx.restore();
+}
+
+
+/* =========================================================
+   REDRAW ALL STROKES
+========================================================= */
+
+function redrawCanvas() {
+
+  if (
+    !canvas ||
+    !activeNotebook
+  ) {
+    return;
+  }
+
+  const ctx =
+    canvas.getContext("2d");
+
+  ctx.save();
+
+  ctx.setTransform(
+    DEVICE_PIXEL_RATIO,
+    0,
+    0,
+    DEVICE_PIXEL_RATIO,
+    0,
+    0
+  );
+
+  ctx.clearRect(
+    0,
+    0,
+    PAPER_WIDTH,
+    PAPER_HEIGHT
+  );
+
+  ctx.restore();
+
+
+  const page =
+    getCurrentPage();
+
+  if (!page) {
+    return;
+  }
+
+
+  page.strokes.forEach(
+    stroke => drawStroke(stroke)
+  );
+
+}
+
+
+/* =========================================================
+   DRAW STORED STROKE
+========================================================= */
+
+function drawStroke(stroke) {
+
+  if (
+    !stroke ||
+    !stroke.points ||
+    stroke.points.length === 0
+  ) {
+    return;
+  }
+
+  const ctx =
+    canvas.getContext("2d");
+
+  ctx.save();
+
+  ctx.setTransform(
+    DEVICE_PIXEL_RATIO,
+    0,
+    0,
+    DEVICE_PIXEL_RATIO,
+    0,
+    0
+  );
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  ctx.globalAlpha =
+    stroke.opacity ?? 1;
+
+
+  if (stroke.tool === "eraser") {
+
+    ctx.globalCompositeOperation =
+      "destination-out";
+
+    ctx.strokeStyle =
+      "rgba(0,0,0,1)";
+
+    ctx.lineWidth =
+      stroke.size * 4;
+
+  } else {
+
+    ctx.globalCompositeOperation =
+      "source-over";
+
+    ctx.strokeStyle =
+      stroke.color;
+
+    ctx.lineWidth =
+      stroke.size *
+      (
+        stroke.tool === "highlighter"
+          ? 4
+          : 1
+      );
+  }
+
+
+  const points =
+    stroke.points;
+
+
+  if (points.length === 1) {
+
+    const p =
+      points[0];
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,
+      p.y,
+      ctx.lineWidth / 2,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fillStyle =
+      stroke.color;
+
+    ctx.fill();
+
+  } else {
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      points[0].x,
+      points[0].y
+    );
+
+    for (
+      let i = 1;
+      i < points.length;
+      i++
+    ) {
+
+      ctx.lineTo(
+        points[i].x,
+        points[i].y
+      );
+
+    }
+
+    ctx.stroke();
+
+  }
+
+
+  ctx.restore();
+
+}
+
+
+/* =========================================================
+   TOOL SELECTION
+========================================================= */
+
+function setTool(tool) {
+
+  if (
+    ![
+      "pen",
+      "highlighter",
+      "eraser",
+      "text",
+      "lasso",
+      "image",
+      "shapes"
+    ].includes(tool)
+  ) {
+    return;
+  }
+
+  finishTextEditing();
+
+  currentTool = tool;
+
+
+  document
+    .querySelectorAll(
+      "[data-tool]"
+    )
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.tool === tool
+      );
+
+      button.classList.toggle(
+        "selected",
+        button.dataset.tool === tool
+      );
+
+    });
+
+
+  canvas.classList.remove(
+    "tool-eraser",
+    "tool-text",
+    "tool-lasso",
+    "tool-shapes"
+  );
+
+
+  if (
+    tool === "eraser"
+  ) {
+    canvas.classList.add(
+      "tool-eraser"
+    );
+  }
+
+  if (
+    tool === "text"
+  ) {
+    canvas.classList.add(
+      "tool-text"
+    );
+  }
+
+  if (
+    tool === "lasso"
+  ) {
+    canvas.classList.add(
+      "tool-lasso"
+    );
+  }
+
+  if (
+    tool === "shapes"
+  ) {
+    canvas.classList.add(
+      "tool-shapes"
+    );
+  }
+
+
+  if (
+    tool === "image"
+  ) {
+
+    showToast(
+      "Bildwerkzeug ist vorbereitet"
+    );
+
+  }
+
+
+  if (
+    tool === "lasso"
+  ) {
+
+    showToast(
+      "Lasso: Auswahlfunktion folgt"
+    );
+
+  }
+
+
+  if (
+    tool === "shapes"
+  ) {
+
+    showToast(
+      "Formen: Ziehe auf der Seite"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   COLORS
+========================================================= */
+
+function setColor(color) {
+
+  currentColor = color;
+
+  document
+    .querySelectorAll(".color")
+    .forEach(button => {
+
+      button.classList.toggle(
+        "selected-color",
+        button.dataset.color === color
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   SIZE
+========================================================= */
+
+function changeSize(direction) {
+
+  const sizes = [
+    1,
+    2,
+    3,
+    4,
+    6,
+    8,
+    12
+  ];
+
+  let index =
+    sizes.indexOf(currentSize);
+
+  if (index === -1) {
+    index = 2;
+  }
+
+  index += direction;
+
+  index =
+    Math.max(
+      0,
+      Math.min(
+        sizes.length - 1,
+        index
+      )
+    );
+
+  currentSize =
+    sizes[index];
+
+  updateSizeDisplay();
+
+}
+
+
+function updateSizeDisplay() {
+
+  sizeDisplay.style.setProperty(
+    "--size",
+    `${Math.min(currentSize * 2, 14)}px`
+  );
+
+  sizeDisplay.title =
+    `Stiftgröße: ${currentSize}px`;
+
+}
+
+
+function showSizeMenu() {
+
+  const sizes = [
+    1,
+    2,
+    3,
+    4,
+    6,
+    8,
+    12
+  ];
+
+  const value =
+    prompt(
+      "Stiftgröße in Pixel:",
+      String(currentSize)
+    );
+
+  if (value === null) {
+    return;
+  }
+
+  const number =
+    Number(value);
+
+  if (
+    Number.isFinite(number) &&
+    number >= 1 &&
+    number <= 30
+  ) {
+
+    currentSize =
+      number;
+
+    updateSizeDisplay();
+
+  }
+
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+function createSnapshot() {
+
+  const page =
+    getCurrentPage();
+
+  if (!page) {
+    return null;
+  }
+
+  return JSON.stringify({
+    strokes: page.strokes,
+    texts: page.texts
+  });
+
+}
+
+
+function restoreSnapshot(snapshot) {
+
+  const page =
+    getCurrentPage();
+
+  if (!page || !snapshot) {
+    return;
+  }
+
+  const data =
+    JSON.parse(snapshot);
+
+  page.strokes =
+    data.strokes || [];
+
+  page.texts =
+    data.texts || [];
+
+  renderTextLayer();
+
+  redrawCanvas();
+
+  scheduleSave();
+
+}
+
+
+function pushHistory() {
+
+  const snapshot =
+    createSnapshot();
+
+  if (!snapshot) {
+    return;
+  }
+
+  undoStack.push(snapshot);
+
+  if (undoStack.length > 50) {
+    undoStack.shift();
+  }
+
+  redoStack = [];
+
+  updateHistoryButtons();
+
+}
+
+
+function undo() {
+
+  if (
+    undoStack.length === 0
+  ) {
+
+    showToast(
+      "Nichts rückgängig zu machen"
+    );
+
+    return;
+  }
+
+
+  const current =
+    createSnapshot();
+
+  redoStack.push(current);
+
+
+  const previous =
+    undoStack.pop();
+
+
+  restoreSnapshot(
+    previous
+  );
+
+  updateHistoryButtons();
+
+}
+
+
+function redo() {
+
+  if (
+    redoStack.length === 0
+  ) {
+
+    showToast(
+      "Nichts zu wiederholen"
+    );
+
+    return;
+  }
+
+
+  const current =
+    createSnapshot();
+
+  undoStack.push(current);
+
+
+  const next =
+    redoStack.pop();
+
+
+  restoreSnapshot(
+    next
+  );
+
+  updateHistoryButtons();
+
+}
+
+
+function updateHistoryButtons() {
+
+  undoButton.disabled =
+    undoStack.length === 0;
+
+  redoButton.disabled =
+    redoStack.length === 0;
+
+}
+
+
+/* =========================================================
+   TEXT TOOL
+========================================================= */
+
+function createTextAtPointer(event) {
+
+  if (textEditing) {
+    finishTextEditing();
+  }
+
+
+  const position =
+    getCanvasPosition(event);
+
+  const rect =
+    paper.getBoundingClientRect();
+
+
+  textInput.style.display =
+    "block";
+
+
+  textInput.value =
+    "";
+
+
+  const scaleX =
+    rect.width / PAPER_WIDTH;
+
+  const scaleY =
+    rect.height / PAPER_HEIGHT;
+
+
+  textInput.style.left =
+    `${position.x * scaleX}px`;
+
+  textInput.style.top =
+    `${position.y * scaleY}px`;
+
+
+  textEditing = true;
+
+  textInput.dataset.x =
+    position.x;
+
+  textInput.dataset.y =
+    position.y;
+
+
+  textInput.focus();
+
+
+  textInput.onblur =
+    finishTextEditing;
+
+}
+
+
+function finishTextEditing() {
+
+  if (!textEditing) {
+    return;
+  }
+
+  const value =
+    textInput.value.trim();
+
+
+  if (value) {
+
+    const page =
+      getCurrentPage();
+
+    if (page) {
+
+      page.texts.push({
+
+        id:
+          "text_" +
+          Date.now() +
+          "_" +
+          Math.random()
+            .toString(36)
+            .slice(2),
+
+        x:
+          Number(
+            textInput.dataset.x
+          ),
+
+        y:
+          Number(
+            textInput.dataset.y
+          ),
+
+        text:
+          value,
+
+        size:
+          22,
+
+        color:
+          currentColor
+
+      });
+
+
+      pushHistory();
+
+      renderTextLayer();
+
+      scheduleSave();
+
+    }
+  }
+
+
+  textInput.value = "";
+
+  textInput.style.display =
+    "none";
+
+  textEditing = false;
+
+}
+
+
+function renderTextLayer() {
+
+  textLayer.innerHTML = "";
+
+  const page =
+    getCurrentPage();
+
+  if (!page) {
+    return;
+  }
+
+
+  page.texts.forEach(
+    note => {
+
+      const element =
+        document.createElement("div");
+
+      element.className =
+        "text-note";
+
+      element.textContent =
+        note.text;
+
+      element.style.left =
+        `${note.x}px`;
+
+      element.style.top =
+        `${note.y}px`;
+
+      element.style.fontSize =
+        `${note.size || 22}px`;
+
+      element.style.color =
+        note.color || "#111";
+
+
+      element.addEventListener(
+        "dblclick",
+        () => {
+
+          const replacement =
+            prompt(
+              "Text bearbeiten:",
+              note.text
+            );
+
+          if (
+            replacement === null
+          ) {
+            return;
+          }
+
+          const old =
+            note.text;
+
+          note.text =
+            replacement;
+
+          pushHistory();
+
+          renderTextLayer();
+
+          scheduleSave();
+
+        }
+      );
+
+
+      textLayer.appendChild(
+        element
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   SHAPES
+========================================================= */
+
+let shapeStart = null;
+
+function startShape(event) {
+
+  const start =
+    getCanvasPosition(event);
+
+  shapeStart = start;
+
+  canvas.setPointerCapture(
+    event.pointerId
+  );
+
+  const move =
+    event => {
+
+      if (!shapeStart) {
+        return;
+      }
+
+      redrawCanvas();
+
+      const end =
+        getCanvasPosition(event);
+
+      drawPreviewRectangle(
+        shapeStart,
+        end
+      );
+
+    };
+
+
+  const up =
+    event => {
+
+      if (!shapeStart) {
+        return;
+      }
+
+      const end =
+        getCanvasPosition(event);
+
+      finishShape(
+        shapeStart,
+        end
+      );
+
+      shapeStart = null;
+
+      canvas.removeEventListener(
+        "pointermove",
+        move
+      );
+
+      canvas.removeEventListener(
+        "pointerup",
+        up
+      );
+
+    };
+
+
+  canvas.addEventListener(
+    "pointermove",
+    move
+  );
+
+  canvas.addEventListener(
+    "pointerup",
+    up
+  );
+
+}
+
+
+function drawPreviewRectangle(
+  start,
+  end
+) {
+
+  const ctx =
+    canvas.getContext("2d");
+
+  ctx.save();
+
+  ctx.setTransform(
+    DEVICE_PIXEL_RATIO,
+    0,
+    0,
+    DEVICE_PIXEL_RATIO,
+    0,
+    0
+  );
+
+  ctx.strokeStyle =
+    currentColor;
+
+  ctx.lineWidth =
+    currentSize;
+
+  ctx.globalAlpha =
+    0.7;
+
+  ctx.setLineDash([
+    5,
+    5
+  ]);
+
+  ctx.strokeRect(
+    start.x,
+    start.y,
+    end.x - start.x,
+    end.y - start.y
+  );
+
+  ctx.restore();
+
+}
+
+
+function finishShape(
+  start,
+  end
+) {
+
+  const page =
+    getCurrentPage();
+
+  if (!page) {
+    return;
+  }
+
+  const stroke = {
+
+    tool: "shape",
+
+    shape: "rectangle",
+
+    color: currentColor,
+
+    size: currentSize,
+
+    opacity: 1,
+
+    points: [
+      start,
+      end
+    ]
+
+  };
+
+
+  page.strokes.push(
+    stroke
+  );
+
+  pushHistory();
+
+  redrawCanvas();
+
+  scheduleSave();
+
+}
+
+
+/* =========================================================
+   DRAW SHAPE STROKES
+========================================================= */
+
+/*
+ * Override drawStroke slightly for rectangles.
+ */
+
+const originalDrawStroke =
+  drawStroke;
+
+drawStroke = function(stroke) {
+
+  if (
+    stroke &&
+    stroke.tool === "shape" &&
+    stroke.shape === "rectangle"
+  ) {
+
+    if (
+      !stroke.points ||
+      stroke.points.length < 2
+    ) {
+      return;
+    }
+
+    const start =
+      stroke.points[0];
+
+    const end =
+      stroke.points[1];
+
+    const ctx =
+      canvas.getContext("2d");
+
+    ctx.save();
+
+    ctx.setTransform(
+      DEVICE_PIXEL_RATIO,
+      0,
+      0,
+      DEVICE_PIXEL_RATIO,
+      0,
+      0
+    );
+
+    ctx.strokeStyle =
+      stroke.color;
+
+    ctx.lineWidth =
+      stroke.size;
+
+    ctx.globalAlpha =
+      stroke.opacity ?? 1;
+
+    ctx.strokeRect(
+      start.x,
+      start.y,
+      end.x - start.x,
+      end.y - start.y
+    );
+
+    ctx.restore();
+
+    return;
+  }
+
+  originalDrawStroke(stroke);
+};
+
+
+/* =========================================================
+   RENAME
+========================================================= */
+
+function renameNotebook() {
+
+  if (!activeNotebook) {
+    return;
+  }
+
+  const name =
+    prompt(
+      "Name des Notizbuchs:",
+      activeNotebook.name
+    );
+
+
+  if (
+    name === null
+  ) {
+    return;
+  }
+
+
+  const cleanName =
+    name.trim();
+
+
+  if (!cleanName) {
+    return;
+  }
+
+
+  activeNotebook.name =
+    cleanName;
+
+  bookTitle.textContent =
+    cleanName;
+
+  scheduleSave();
+
+  showToast(
+    "Notizbuch umbenannt"
+  );
+
 }
 
 
@@ -1130,807 +2274,314 @@ function toggleCurrentFavorite() {
 ========================================================= */
 
 function openSearch() {
-  const isOpen =
-    !searchPanel.classList.contains("hidden");
 
-  closePanels();
+  searchOverlay.classList.remove(
+    "hidden"
+  );
 
-  if (isOpen) {
+  searchInput.value = "";
+
+  searchResults.innerHTML = "";
+
+  setTimeout(
+    () => searchInput.focus(),
+    50
+  );
+
+}
+
+
+function closeSearchDialog() {
+
+  searchOverlay.classList.add(
+    "hidden"
+  );
+
+}
+
+
+function performSearch() {
+
+  const query =
+    searchInput.value
+      .trim()
+      .toLowerCase();
+
+
+  searchResults.innerHTML = "";
+
+
+  if (!query) {
     return;
   }
 
-  searchPanel.classList.remove("hidden");
-
-  setTimeout(() => {
-    globalSearch?.focus();
-    renderSearchResults("");
-  }, 50);
-}
-
-
-function renderSearchResults(query) {
-  if (!searchResults) {
-    return;
-  }
-
-  const searchTerm =
-    query.trim().toLowerCase();
-
-  let results = documents.filter(
-    (document) => !document.trashed
-  );
-
-  if (searchTerm) {
-    results = results.filter(
-      (document) => {
-        const documentText =
-          [
-            document.title,
-            document.type,
-            ...(document.pages || []).map(
-              (page) =>
-                `${page.title} ${page.content}`
-            )
-          ]
-            .join(" ")
-            .toLowerCase();
-
-        return documentText.includes(searchTerm);
-      }
-    );
-  }
-
-  if (results.length === 0) {
-    searchResults.innerHTML = `
-      <div class="search-empty">
-        Keine Ergebnisse gefunden.
-      </div>
-    `;
-
-    return;
-  }
-
-  searchResults.innerHTML = results
-    .slice(0, 10)
-    .map(
-      (document) => `
-        <button
-          class="search-result"
-          type="button"
-          data-search-document="${escapeHTML(
-            document.id
-          )}"
-        >
-
-          <span>
-            ${escapeHTML(document.title)}
-          </span>
-
-          <small>
-            ${escapeHTML(
-              getTypeName(document.type)
-            )}
-          </small>
-
-        </button>
-      `
-    )
-    .join("");
-}
-
-
-/* =========================================================
-   SETTINGS
-========================================================= */
-
-function openSettings() {
-  const isOpen =
-    !settingsPanel.classList.contains("hidden");
-
-  closePanels();
-
-  if (!isOpen) {
-    settingsPanel.classList.remove("hidden");
-  }
-}
-
-
-function handleSetting(setting) {
-  const messages = {
-    appearance:
-      "Aussehen: Diese Einstellung können wir als Nächstes ausbauen.",
-    notifications:
-      "Benachrichtigungen sind aktuell aktiviert.",
-    sync:
-      "Cloud-Sync ist für die nächste Version vorbereitet.",
-    security:
-      "Deine lokalen Notizen werden im Browser gespeichert."
-  };
 
-  showToast(
-    messages[setting] ||
-    "Einstellung ausgewählt."
-  );
-}
+  let found = 0;
 
 
-/* =========================================================
-   CONFIRM MODAL
-========================================================= */
+  activeNotebook.pages.forEach(
+    (page, pageIndex) => {
 
-function openConfirm(
-  title,
-  message,
-  callback
-) {
-  confirmCallback = callback;
+      page.texts.forEach(
+        text => {
 
-  confirmTitle.textContent = title;
-  confirmMessage.textContent = message;
+          if (
+            text.text
+              .toLowerCase()
+              .includes(query)
+          ) {
 
-  confirmModal.classList.remove("hidden");
-}
+            found++;
 
 
-function closeConfirm() {
-  confirmModal.classList.add("hidden");
-  confirmCallback = null;
-}
-
+            const result =
+              document.createElement(
+                "div"
+              );
 
-/* =========================================================
-   TABLET PROMO
-========================================================= */
+            result.className =
+              "search-result";
 
-function setupTabletCard() {
-  const dismissed =
-    localStorage.getItem(
-      "studyink_tablet_card"
-    );
 
-  if (dismissed === "closed") {
-    tabletCard?.classList.add("hidden");
-  }
-}
+            const title =
+              document.createElement(
+                "div"
+              );
 
+            title.className =
+              "search-result-title";
 
-function closeTabletPromo() {
-  tabletCard?.classList.add("hidden");
-
-  localStorage.setItem(
-    "studyink_tablet_card",
-    "closed"
-  );
-}
+            title.textContent =
+              text.text;
 
 
-function installStudyInk() {
-  localStorage.setItem(
-    "studyink_installed",
-    "true"
-  );
+            const meta =
+              document.createElement(
+                "div"
+              );
 
-  if (installApp) {
-    installApp.textContent =
-      "Installiert ✓";
+            meta.className =
+              "search-result-page";
 
-    installApp.disabled = true;
-  }
+            meta.textContent =
+              `Seite ${pageIndex + 1}`;
 
-  showToast(
-    "StudyInk wurde als installiert markiert."
-  );
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function handleNavigation(view) {
-  if (view === "marketplace") {
-    setActiveNavigation("marketplace");
-
-    showToast(
-      "Marketplace kommt bald."
-    );
-
-    return;
-  }
-
-  showLibrary(view);
-}
-
-
-/* =========================================================
-   EVENTS — NAVIGATION
-========================================================= */
-
-$$(".nav-item").forEach((button) => {
-  button.addEventListener(
-    "click",
-    () => {
-      handleNavigation(
-        button.dataset.view
-      );
-    }
-  );
-});
-
-
-/* =========================================================
-   EVENTS — NEW
-========================================================= */
-
-newButton?.addEventListener(
-  "click",
-  (event) => {
-    event.stopPropagation();
-    toggleNewMenu();
-  }
-);
-
-
-$$("[data-create]").forEach((button) => {
-  button.addEventListener(
-    "click",
-    (event) => {
-      event.stopPropagation();
-
-      const type =
-        button.dataset.create;
-
-      if (!type) {
-        return;
-      }
-
-      createDocument(type);
-    }
-  );
-});
-
-
-closeCreateMenu?.addEventListener(
-  "click",
-  () => {
-    createMenu.classList.add("hidden");
-  }
-);
-
-
-/* =========================================================
-   DOUBLE CLICK NEW = QUICK NOTE
-========================================================= */
-
-newButton?.addEventListener(
-  "dblclick",
-  () => {
-    createQuickNote();
-  }
-);
-
-
-/* =========================================================
-   EVENTS — DOCUMENT GRID
-========================================================= */
-
-documentGrid?.addEventListener(
-  "click",
-  (event) => {
-    const actionButton =
-      event.target.closest(
-        "[data-document-action]"
+
+            result.appendChild(
+              title
+            );
+
+            result.appendChild(
+              meta
+            );
+
+
+            result.addEventListener(
+              "click",
+              () => {
+
+                selectPage(
+                  pageIndex
+                );
+
+                closeSearchDialog();
+
+              }
+            );
+
+
+            searchResults.appendChild(
+              result
+            );
+
+          }
+
+        }
       );
 
-    if (actionButton) {
-      event.stopPropagation();
-
-      const action =
-        actionButton.dataset.documentAction;
-
-      const id =
-        actionButton.dataset.documentId;
-
-      if (action === "open") {
-        showNotebook(id);
-      }
-
-      if (action === "favorite") {
-        toggleFavorite(id);
-      }
-
-      if (action === "trash") {
-        moveToTrash(id);
-      }
-
-      if (action === "restore") {
-        restoreDocument(id);
-      }
-
-      return;
     }
+  );
 
-    const card =
-      event.target.closest(
-        ".studyink-document"
+
+  if (found === 0) {
+
+    const empty =
+      document.createElement(
+        "div"
       );
 
-    if (card) {
-      showNotebook(
-        card.dataset.documentId
-      );
-    }
+    empty.style.padding =
+      "20px 0";
+
+    empty.style.color =
+      "#78838d";
+
+    empty.textContent =
+      "Keine Treffer.";
+
+    searchResults.appendChild(
+      empty
+    );
+
   }
-);
+
+}
 
 
 /* =========================================================
-   EVENTS — SEARCH
+   STATUS
 ========================================================= */
 
-searchButton?.addEventListener(
-  "click",
-  (event) => {
-    event.stopPropagation();
-    openSearch();
-  }
-);
+function setSaveStatus(text) {
+
+  saveStatus.textContent =
+    text;
+
+}
 
 
-globalSearch?.addEventListener(
-  "input",
-  () => {
-    renderSearchResults(
-      globalSearch.value
-    );
-  }
-);
+function showToast(message) {
+
+  clearTimeout(toastTimer);
+
+  toast.textContent =
+    message;
+
+  toast.classList.add(
+    "show"
+  );
 
 
-librarySearchInput?.addEventListener(
-  "input",
-  () => {
-    renderLibrary();
-  }
-);
-
-
-searchResults?.addEventListener(
-  "click",
-  (event) => {
-    const result =
-      event.target.closest(
-        "[data-search-document]"
-      );
-
-    if (!result) {
-      return;
-    }
-
-    showNotebook(
-      result.dataset.searchDocument
-    );
-  }
-);
-
-
-/* =========================================================
-   EVENTS — SETTINGS
-========================================================= */
-
-settingsButton?.addEventListener(
-  "click",
-  (event) => {
-    event.stopPropagation();
-    openSettings();
-  }
-);
-
-
-$$("[data-setting]").forEach(
-  (button) => {
-    button.addEventListener(
-      "click",
+  toastTimer =
+    setTimeout(
       () => {
-        handleSetting(
-          button.dataset.setting
-        );
-      }
-    );
-  }
-);
 
-
-/* =========================================================
-   EVENTS — NOTEBOOK
-========================================================= */
-
-notebookBack?.addEventListener(
-  "click",
-  () => {
-    showLibrary();
-  }
-);
-
-
-backButton?.addEventListener(
-  "click",
-  () => {
-    if (
-      !notebookView.classList.contains(
-        "hidden"
-      )
-    ) {
-      showLibrary();
-      return;
-    }
-
-    closePanels();
-  }
-);
-
-
-notebookTitle?.addEventListener(
-  "input",
-  updateNotebookTitle
-);
-
-
-pageTitle?.addEventListener(
-  "input",
-  updateCurrentPage
-);
-
-
-pageContent?.addEventListener(
-  "input",
-  updateCurrentPage
-);
-
-
-addPageButton?.addEventListener(
-  "click",
-  addPage
-);
-
-
-duplicatePageButton?.addEventListener(
-  "click",
-  duplicateCurrentPage
-);
-
-
-deletePageButton?.addEventListener(
-  "click",
-  requestDeletePage
-);
-
-
-favoriteNotebook?.addEventListener(
-  "click",
-  toggleCurrentFavorite
-);
-
-
-/* =========================================================
-   EVENTS — PAGE LIST
-========================================================= */
-
-pageList?.addEventListener(
-  "click",
-  (event) => {
-    const button =
-      event.target.closest(
-        "[data-page-id]"
-      );
-
-    if (!button) {
-      return;
-    }
-
-    const notebook =
-      getCurrentNotebook();
-
-    if (!notebook) {
-      return;
-    }
-
-    currentPageId =
-      button.dataset.pageId;
-
-    renderNotebook();
-
-    pageContent?.focus();
-  }
-);
-
-
-/* =========================================================
-   NOTEBOOK TOOL BUTTONS
-========================================================= */
-
-$$(".floating-tool").forEach(
-  (button) => {
-    button.addEventListener(
-      "click",
-      () => {
-        $$(".floating-tool").forEach(
-          (tool) =>
-            tool.classList.remove(
-              "active"
-            )
+        toast.classList.remove(
+          "show"
         );
 
-        button.classList.add("active");
-
-        const tool =
-          button.dataset.tool;
-
-        const messages = {
-          select: "Auswahlwerkzeug",
-          pen: "Stift ausgewählt",
-          highlight: "Textmarker ausgewählt",
-          eraser: "Radierer ausgewählt"
-        };
-
-        showToast(
-          messages[tool] ||
-          "Werkzeug ausgewählt."
-        );
-      }
+      },
+      1800
     );
-  }
-);
+
+}
 
 
 /* =========================================================
-   NOTEBOOK MORE
+   KEYBOARD SHORTCUTS
 ========================================================= */
 
-notebookMore?.addEventListener(
-  "click",
-  () => {
-    showToast(
-      "Weitere Notebook-Funktionen kommen bald."
-    );
-  }
-);
+function handleKeyboard(event) {
+
+  const modifier =
+    event.ctrlKey ||
+    event.metaKey;
 
 
-/* =========================================================
-   TABLET
-========================================================= */
-
-closeTabletCard?.addEventListener(
-  "click",
-  closeTabletPromo
-);
-
-
-installApp?.addEventListener(
-  "click",
-  installStudyInk
-);
-
-
-/* =========================================================
-   CONFIRM EVENTS
-========================================================= */
-
-confirmCancel?.addEventListener(
-  "click",
-  closeConfirm
-);
-
-
-confirmAccept?.addEventListener(
-  "click",
-  () => {
-    if (typeof confirmCallback === "function") {
-      confirmCallback();
-    }
-
-    closeConfirm();
-  }
-);
-
-
-/* =========================================================
-   CLOSE BUTTONS
-========================================================= */
-
-$$("[data-close]").forEach(
-  (button) => {
-    button.addEventListener(
-      "click",
-      () => {
-        closePanels();
-      }
-    );
-  }
-);
-
-
-/* =========================================================
-   OUTSIDE CLICK
-========================================================= */
-
-document.addEventListener(
-  "click",
-  (event) => {
-
-    const clickedNew =
-      event.target.closest(
-        "#newMenu"
-      );
-
-    const clickedCreate =
-      event.target.closest(
-        "#createMenu"
-      );
-
-    const clickedSearch =
-      event.target.closest(
-        "#searchPanel"
-      );
-
-    const clickedSettings =
-      event.target.closest(
-        "#settingsPanel"
-      );
-
-    const clickedNewButton =
-      event.target.closest(
-        "#newButton"
-      );
-
-    const clickedSearchButton =
-      event.target.closest(
-        "#searchButton"
-      );
-
-    const clickedSettingsButton =
-      event.target.closest(
-        "#settingsButton"
-      );
-
-    if (
-      !clickedNew &&
-      !clickedCreate &&
-      !clickedSearch &&
-      !clickedSettings &&
-      !clickedNewButton &&
-      !clickedSearchButton &&
-      !clickedSettingsButton
-    ) {
-      closePanels();
-    }
-  }
-);
-
-
-/* =========================================================
-   EDITOR / MODAL OUTSIDE CLICK
-========================================================= */
-
-confirmModal?.addEventListener(
-  "click",
-  (event) => {
-    if (
-      event.target === confirmModal
-    ) {
-      closeConfirm();
-    }
-  }
-);
-
-
-/* =========================================================
-   ESCAPE
-========================================================= */
-
-document.addEventListener(
-  "keydown",
-  (event) => {
-
-    if (event.key !== "Escape") {
-      return;
-    }
-
-    if (
-      !confirmModal.classList.contains(
-        "hidden"
-      )
-    ) {
-      closeConfirm();
-      return;
-    }
-
-    if (
-      !notebookView.classList.contains(
-        "hidden"
-      )
-    ) {
-      showLibrary();
-      return;
-    }
-
-    closePanels();
-  }
-);
-
-
-/* =========================================================
-   CTRL / CMD + S
-========================================================= */
-
-document.addEventListener(
-  "keydown",
-  (event) => {
-
-    if (
-      (event.ctrlKey || event.metaKey) &&
-      event.key.toLowerCase() === "s"
-    ) {
-      event.preventDefault();
-
-      saveDocuments();
-
-      if (
-        !notebookView.classList.contains(
-          "hidden"
-        )
-      ) {
-        saveStatus.textContent =
-          "Gespeichert";
-
-        showToast(
-          "Notizbuch gespeichert."
-        );
-      }
-    }
-  }
-);
-
-
-/* =========================================================
-   AUTOSAVE BEFORE LEAVING
-========================================================= */
-
-window.addEventListener(
-  "beforeunload",
-  () => {
-    updateCurrentPage();
-    saveDocuments();
-  }
-);
-
-
-/* =========================================================
-   INITIALIZATION
-========================================================= */
-
-function initializeStudyInk() {
-
-  setupTabletCard();
-
-  const installed =
-    localStorage.getItem(
-      "studyink_installed"
-    );
+  /* Undo */
 
   if (
-    installed === "true" &&
-    installApp
+    modifier &&
+    event.key.toLowerCase() === "z" &&
+    !event.shiftKey
   ) {
-    installApp.textContent =
-      "Installiert ✓";
 
-    installApp.disabled = true;
+    event.preventDefault();
+
+    undo();
+
+    return;
   }
 
-  showLibrary("documents");
+
+  /* Redo */
+
+  if (
+    modifier &&
+    (
+      event.key.toLowerCase() === "y" ||
+      (
+        event.key.toLowerCase() === "z" &&
+        event.shiftKey
+      )
+    )
+  ) {
+
+    event.preventDefault();
+
+    redo();
+
+    return;
+  }
+
+
+  /* Save */
+
+  if (
+    modifier &&
+    event.key.toLowerCase() === "s"
+  ) {
+
+    event.preventDefault();
+
+    saveCurrentNotebook();
+
+    showToast(
+      "Gespeichert"
+    );
+
+    return;
+  }
+
+
+  /* Escape */
+
+  if (
+    event.key === "Escape"
+  ) {
+
+    if (
+      !searchOverlay.classList.contains(
+        "hidden"
+      )
+    ) {
+
+      closeSearchDialog();
+
+      return;
+    }
+
+    if (textEditing) {
+      finishTextEditing();
+    }
+
+  }
+
 }
 
 
-initializeStudyInk();
+/* =========================================================
+   CURRENT PAGE
+========================================================= */
+
+function getCurrentPage() {
+
+  if (
+    !activeNotebook ||
+    !activeNotebook.pages
+  ) {
+    return null;
+  }
+
+  return activeNotebook.pages[
+    activePageIndex
+  ] || null;
+
+}
+
+
+/* =========================================================
+   INITIAL UI
+========================================================= */
+
+updateSizeDisplay();

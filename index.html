@@ -2,757 +2,526 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="description"
-    content="StudyInk – deine digitale Lern- und Notizumgebung."
-  >
-
-  <title>StudyInk</title>
+  <title>StudyInk – Notizbuch</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- =====================================================
-       APP
-  ====================================================== -->
+  <div id="app">
 
-  <div class="app-shell" id="app">
+    <!-- =========================================
+         STUDYINK BIBLIOTHEK
+    ========================================== -->
 
-    <!-- ===================================================
-         SIDEBAR
-    ==================================================== -->
+    <section id="libraryView" class="library-view hidden">
 
-    <aside class="sidebar">
+      <aside class="library-sidebar">
 
-      <div class="brand-wrap">
+        <div class="brand">
+          StudyInk
+        </div>
 
-        <button
-          class="brand-button"
-          type="button"
-          data-view="documents"
-          aria-label="StudyInk Startseite"
-        >
-          <div class="brand-mark">
-            <span class="mark-dot"></span>
-          </div>
-
-          <span class="brand-text">
-            STUDYINK
-          </span>
-        </button>
-
-      </div>
-
-
-      <!-- Navigation -->
-
-      <nav
-        class="side-nav"
-        aria-label="Hauptnavigation"
-      >
-
-        <button
-          class="nav-item active"
-          type="button"
-          data-view="documents"
-        >
-          <span class="nav-icon icon-doc"></span>
+        <button class="nav active">
+          ▣
           <span>Dokumente</span>
         </button>
 
-
-        <button
-          class="nav-item"
-          type="button"
-          data-view="favorites"
-        >
-          <span class="nav-icon icon-star"></span>
+        <button class="nav">
+          ☆
           <span>Favoriten</span>
         </button>
 
-
-        <button
-          class="nav-item"
-          type="button"
-          data-view="shared"
-        >
-          <span class="nav-icon icon-share"></span>
+        <button class="nav">
+          ⇄
           <span>Geteilt</span>
         </button>
 
-
-        <button
-          class="nav-item"
-          type="button"
-          data-view="marketplace"
-        >
-          <span class="nav-icon icon-store"></span>
-          <span>Marketplace</span>
-          <small>+50</small>
-        </button>
-
-
-        <button
-          class="nav-item"
-          type="button"
-          data-view="trash"
-        >
-          <span class="nav-icon icon-trash"></span>
+        <button class="nav">
+          ⌫
           <span>Papierkorb</span>
         </button>
 
-      </nav>
+      </aside>
 
 
-      <!-- Tablet Promo -->
+      <main class="library-main">
 
-      <div
-        class="sidebar-card"
-        id="tabletCard"
-      >
+        <header class="library-header">
 
-        <button
-          class="card-close"
-          type="button"
-          id="closeTabletCard"
-          aria-label="Karte schließen"
-        >
-          ×
-        </button>
+          <div>
+            <small>STUDYINK</small>
+            <h1>Meine Notizen</h1>
+          </div>
+
+          <button
+            id="newNotebook"
+            class="primary">
+            ＋ Neues Notizbuch
+          </button>
+
+        </header>
 
 
         <div
-          class="promo-visual"
-          aria-hidden="true"
-        >
-
-          <div class="device-frame">
-
-            <div class="device-screen">
-
-              <div class="sheet-mini sheet-mini-one"></div>
-              <div class="sheet-mini sheet-mini-two"></div>
-              <div class="sheet-mini sheet-mini-three"></div>
-
-            </div>
-
-          </div>
-
+          id="documentGrid"
+          class="document-grid">
         </div>
 
+      </main>
 
-        <p class="promo-title">
-          StudyInk für Tablet
-        </p>
-
-        <p class="promo-copy">
-          Nutze StudyInk auch auf deinem Tablet
-          und schreibe deine Notizen überall.
-        </p>
-
-        <button
-          class="install-btn"
-          id="installApp"
-          type="button"
-        >
-          App laden
-        </button>
-
-      </div>
-
-    </aside>
+    </section>
 
 
-    <!-- ===================================================
-         MAIN WORKSPACE
-    ==================================================== -->
+    <!-- =========================================
+         NOTIZBUCH EDITOR
+    ========================================== -->
 
-    <main class="workspace">
+    <section
+      id="notebookView"
+      class="notebook-view">
 
-      <!-- Header -->
 
-      <header class="workspace-header">
+      <!-- =====================================
+           TOP TOOLBAR
+      ====================================== -->
 
-        <div class="header-left">
+      <header class="topbar">
+
+        <!-- Linke Seite -->
+
+        <div class="top-left">
 
           <button
-            class="header-button icon-back"
             id="backButton"
-            type="button"
-            aria-label="Zurück"
-          ></button>
+            class="top-button home"
+            title="Zurück">
+            ⌂
+          </button>
+
+
+          <button
+            id="renameButton"
+            class="book-name"
+            title="Notizbuch umbenennen">
+
+            <span id="bookTitle">
+              Unbenanntes Notizbuch
+            </span>
+
+            <span>
+              ⌄
+            </span>
+
+          </button>
 
         </div>
 
 
-        <div class="header-spacer"></div>
+        <!-- =================================
+             RECHTE WERKZEUGLEISTE
+        ================================== -->
+
+        <div class="top-tools">
 
 
-        <div class="header-actions">
+          <!-- Seiten -->
 
           <button
-            class="header-button icon-search"
+            id="pagesButton"
+            class="top-button"
+            title="Seitenübersicht">
+            ▣
+          </button>
+
+
+          <!-- Suche -->
+
+          <button
             id="searchButton"
-            type="button"
-            aria-label="Suche"
-          ></button>
+            class="top-button"
+            title="Suchen">
+            ⌕
+          </button>
+
+
+          <!-- Dokumente -->
+
+          <button
+            class="top-button"
+            title="Dokumente">
+            ▤
+          </button>
+
+
+          <!-- Auswahl -->
+
+          <button
+            class="top-button"
+            title="Auswahl">
+            ⌁
+          </button>
+
+
+          <i></i>
+
+
+          <!-- ================================
+               ZEICHENWERKZEUGE
+          ================================= -->
+
+          <button
+            class="top-button active"
+            data-tool="pen"
+            title="Stift">
+            ✎
+          </button>
 
 
           <button
-            class="header-button icon-settings"
-            id="settingsButton"
-            type="button"
-            aria-label="Einstellungen"
-          ></button>
+            class="top-button"
+            data-tool="eraser"
+            title="Radierer">
+            ⌫
+          </button>
+
+
+          <button
+            class="top-button"
+            data-tool="text"
+            title="Text">
+            T
+          </button>
+
+
+          <button
+            class="top-button"
+            data-tool="lasso"
+            title="Lasso">
+            ◌
+          </button>
+
+
+          <button
+            class="top-button"
+            data-tool="image"
+            title="Bild">
+            ▧
+          </button>
+
+
+          <button
+            class="top-button"
+            data-tool="shapes"
+            title="Formen">
+            △
+          </button>
+
+
+          <button
+            class="top-button"
+            title="Kommentar">
+            ▱
+          </button>
+
+
+          <button
+            class="top-button"
+            title="Laser">
+            ✧
+          </button>
+
+
+          <i></i>
+
+
+          <!-- Audio -->
+
+          <button
+            class="top-button"
+            title="Audio">
+            ♩
+          </button>
+
+
+          <button
+            class="top-button"
+            title="Aufnahme">
+            ♙
+          </button>
+
+
+          <button
+            class="top-button"
+            title="Weitere Optionen">
+            ⌄
+          </button>
+
+
+          <i></i>
+
+
+          <!-- Neue Seite -->
+
+          <button
+            id="addPageTop"
+            class="top-button"
+            title="Neue Seite">
+            ＋
+          </button>
+
+
+          <!-- Teilen -->
+
+          <button
+            class="top-button"
+            title="Teilen">
+            ↥
+          </button>
+
+
+          <!-- Mehr -->
+
+          <button
+            class="top-button"
+            title="Mehr">
+            •••
+          </button>
 
         </div>
 
       </header>
 
 
-      <!-- =================================================
-           LIBRARY VIEW
-      ================================================== -->
 
-      <section
-        class="content-panel"
-        id="libraryView"
-      >
+      <!-- =========================================
+           UNDO / REDO
+      ========================================== -->
 
-        <!-- Documents Header -->
+      <div class="history">
 
-        <div class="documents-header">
+        <button
+          id="undo"
+          title="Rückgängig">
+          ↶
+        </button>
 
-          <div>
+        <button
+          id="redo"
+          title="Wiederholen">
+          ↷
+        </button>
 
-            <p class="page-eyebrow">
-              Meine Bibliothek
-            </p>
+      </div>
 
-            <h1>
-              Dokumente
-            </h1>
+
+
+      <!-- =========================================
+           SCHWEBENDE STIFT-LEISTE
+      ========================================== -->
+
+      <div
+        id="penPalette"
+        class="pen-palette">
+
+
+        <!-- Stift -->
+
+        <button
+          class="palette-tool selected"
+          data-tool="pen"
+          title="Stift">
+          ✒
+        </button>
+
+
+        <!-- Marker -->
+
+        <button
+          class="palette-tool"
+          data-tool="highlighter"
+          title="Marker">
+          ⌁
+        </button>
+
+
+        <!-- Radierer -->
+
+        <button
+          class="palette-tool"
+          data-tool="eraser"
+          title="Radierer">
+          ◩
+        </button>
+
+
+        <!-- Lasso -->
+
+        <button
+          class="palette-tool"
+          data-tool="lasso"
+          title="Lasso">
+          ◫
+        </button>
+
+
+        <!-- Formen -->
+
+        <button
+          class="palette-tool"
+          data-tool="shapes"
+          title="Formen">
+          ◌
+        </button>
+
+
+        <span class="divider"></span>
+
+
+        <!-- =====================================
+             STIFTGRÖSSE
+        ====================================== -->
+
+        <button
+          id="sizeDown"
+          title="Dünner">
+          −
+        </button>
+
+
+        <button
+          id="sizeDisplay"
+          class="size-display"
+          title="Aktuelle Stiftgröße">
+          ●
+        </button>
+
+
+        <button
+          id="sizeUp"
+          title="Dicker">
+          +
+        </button>
+
+
+        <button
+          id="sizeMenu"
+          title="Stiftgröße">
+          ⌄
+        </button>
+
+
+        <!-- =====================================
+             FARBEN
+        ====================================== -->
+
+        <button
+          class="color blue"
+          data-color="#1685f7"
+          title="Blau">
+        </button>
+
+
+        <button
+          class="color black selected-color"
+          data-color="#111111"
+          title="Schwarz">
+        </button>
+
+
+        <button
+          class="color white"
+          data-color="#ffffff"
+          title="Weiß">
+        </button>
+
+
+        <button
+          class="more-colors"
+          title="Weitere Farben">
+          ⊕
+        </button>
+
+      </div>
+
+
+
+      <!-- =========================================
+           EDITOR ARBEITSBEREICH
+      ========================================== -->
+
+      <main class="workspace">
+
+
+        <!-- =====================================
+             SEITENLEISTE
+        ====================================== -->
+
+        <aside
+          id="pageSidebar"
+          class="page-sidebar">
+
+
+          <div class="sidebar-title">
+
+            <b>
+              Seiten
+            </b>
+
+            <button
+              id="addPage"
+              title="Neue Seite">
+              ＋
+            </button>
 
           </div>
 
 
-          <button
-            class="new-btn compact"
-            id="newButton"
-            type="button"
-          >
-            <span>+</span>
-            Neu
-          </button>
+          <div id="pageList">
+          </div>
 
-        </div>
+        </aside>
 
 
-        <!-- Search field -->
+
+        <!-- =====================================
+             PAPIER
+        ====================================== -->
 
         <div
-          class="library-search hidden"
-          id="librarySearch"
-        >
-
-          <span class="search-input-icon"></span>
-
-          <input
-            id="librarySearchInput"
-            type="search"
-            placeholder="Dokumente durchsuchen..."
-            autocomplete="off"
-          >
-
-        </div>
-
-
-        <!-- =================================================
-             QUICK CREATE
-        ================================================== -->
-
-        <div
-          class="create-menu hidden"
-          id="createMenu"
-        >
-
-          <div class="create-menu-header">
-
-            <div>
-
-              <strong>
-                Neu erstellen
-              </strong>
-
-              <small>
-                Was möchtest du erstellen?
-              </small>
-
-            </div>
-
-            <button
-              class="create-menu-close"
-              id="closeCreateMenu"
-              type="button"
-            >
-              ×
-            </button>
-
-          </div>
-
-
-          <div class="create-grid">
-
-            <button
-              class="create-card"
-              type="button"
-              data-create="notebook"
-            >
-
-              <span class="create-card-icon icon-doc"></span>
-
-              <strong>
-                Notizbuch
-              </strong>
-
-              <small>
-                Mehrere Seiten
-              </small>
-
-            </button>
-
-
-            <button
-              class="create-card"
-              type="button"
-              data-create="quick-note"
-            >
-
-              <span class="create-card-icon icon-note"></span>
-
-              <strong>
-                Schnellnotiz
-              </strong>
-
-              <small>
-                Eine schnelle Notiz
-              </small>
-
-            </button>
-
-
-            <button
-              class="create-card"
-              type="button"
-              data-create="text"
-            >
-
-              <span class="create-card-icon icon-doc"></span>
-
-              <strong>
-                Text Document
-              </strong>
-
-              <small>
-                Schreiben & bearbeiten
-              </small>
-
-              <span class="tag beta">
-                BETA
-              </span>
-
-            </button>
-
-
-            <button
-              class="create-card"
-              type="button"
-              data-create="whiteboard"
-            >
-
-              <span class="create-card-icon icon-board"></span>
-
-              <strong>
-                Whiteboard
-              </strong>
-
-              <small>
-                Freie Fläche
-              </small>
-
-              <span class="tag new">
-                NEW
-              </span>
-
-            </button>
-
-
-            <button
-              class="create-card"
-              type="button"
-              data-create="folder"
-            >
-
-              <span class="create-card-icon icon-folder"></span>
-
-              <strong>
-                Ordner
-              </strong>
-
-              <small>
-                Dokumente organisieren
-              </small>
-
-            </button>
-
-
-            <button
-              class="create-card"
-              type="button"
-              data-create="image"
-            >
-
-              <span class="create-card-icon icon-image"></span>
-
-              <strong>
-                Bild
-              </strong>
-
-              <small>
-                Bild hinzufügen
-              </small>
-
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <!-- =================================================
-             EMPTY STATE
-        ================================================== -->
-
-        <div
-          class="empty-state"
-          id="emptyState"
-        >
-
-          <div class="empty-header">
-
-            <div>
-
-              <span class="empty-title">
-                Bereit zum Lernen?
-              </span>
-
-              <p class="empty-subtitle">
-                Erstelle dein erstes Notizbuch.
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div class="empty-content">
-
-            <div
-              class="empty-illustration"
-              aria-hidden="true"
-            >
-
-              <div class="sheet sheet-one"></div>
-              <div class="sheet sheet-two"></div>
-              <div class="sheet sheet-three"></div>
-              <div class="page-pen"></div>
-
-            </div>
-
-
-            <p>
-              Du hast noch keine Dokumente.
-              <br>
-              Erstelle dein erstes Notizbuch.
-            </p>
-
-          </div>
-
-
-          <div class="empty-footer">
-
-            <span class="tip">
-              Tipp: Doppelklick auf „+ Neu“ erstellt direkt
-              eine Schnellnotiz.
-            </span>
-
-            <button
-              class="new-btn"
-              type="button"
-              data-create="notebook"
-            >
-              + Notizbuch
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <!-- =================================================
-             DOCUMENT LIBRARY
-        ================================================== -->
-
-        <div
-          class="document-library hidden"
-          id="documentLibrary"
-        >
-
-          <div class="library-section-header">
-
-            <div>
-
-              <span class="section-title">
-                Meine Dokumente
-              </span>
-
-              <span
-                class="document-count"
-                id="documentCount"
-              >
-                0 Dokumente
-              </span>
-
-            </div>
-
-            <button
-              class="sort-button"
-              id="sortButton"
-              type="button"
-            >
-              Zuletzt geändert
-              <span>⌄</span>
-            </button>
-
-          </div>
+          id="paperStage"
+          class="paper-stage">
 
 
           <div
-            class="document-grid"
-            id="documentGrid"
-          ></div>
-
-        </div>
-
-      </section>
+            id="paper"
+            class="paper">
 
 
-      <!-- =================================================
-           NOTEBOOK VIEW
-      ================================================== -->
+            <!-- Kariertes Papier -->
 
-      <section
-        class="notebook-view hidden"
-        id="notebookView"
-      >
-
-        <!-- Notebook top bar -->
-
-        <div class="notebook-toolbar">
-
-          <div class="notebook-toolbar-left">
-
-            <button
-              class="toolbar-back"
-              id="notebookBack"
-              type="button"
-            >
-              <span class="icon-back"></span>
-              Bibliothek
-            </button>
-
-
-            <div class="toolbar-divider"></div>
-
-
-            <div class="notebook-title-wrap">
-
-              <span
-                class="notebook-type-label"
-                id="notebookTypeLabel"
-              >
-                NOTIZBUCH
-              </span>
-
-              <input
-                id="notebookTitle"
-                class="notebook-title-input"
-                type="text"
-                value="Mein Notizbuch"
-                spellcheck="false"
-              >
-
+            <div class="grid">
             </div>
 
-          </div>
+
+            <!-- =================================
+                 ECHTES ZEICHEN-CANVAS
+            ================================== -->
+
+            <canvas
+              id="canvas">
+            </canvas>
 
 
-          <div class="notebook-toolbar-right">
-
-            <span
-              class="save-status"
-              id="saveStatus"
-            >
-              Gespeichert
-            </span>
-
-
-            <button
-              class="toolbar-icon-button"
-              id="favoriteNotebook"
-              type="button"
-              aria-label="Favorisieren"
-            >
-              ☆
-            </button>
-
-
-            <button
-              class="toolbar-icon-button"
-              id="notebookMore"
-              type="button"
-              aria-label="Weitere Optionen"
-            >
-              ⋯
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <!-- Notebook body -->
-
-        <div class="notebook-body">
-
-          <!-- Page Sidebar -->
-
-          <aside class="page-sidebar">
-
-            <div class="page-sidebar-header">
-
-              <div>
-
-                <strong>
-                  Seiten
-                </strong>
-
-                <small id="pageCount">
-                  1 Seite
-                </small>
-
-              </div>
-
-
-              <button
-                class="add-page-button"
-                id="addPage"
-                type="button"
-                aria-label="Neue Seite"
-              >
-                +
-              </button>
-
-            </div>
-
+            <!-- =================================
+                 TEXT-LAYER
+            ================================== -->
 
             <div
-              class="page-list"
-              id="pageList"
-            ></div>
-
-
-            <div class="page-sidebar-footer">
-
-              <button
-                class="sidebar-action"
-                id="duplicatePage"
-                type="button"
-              >
-                Seite duplizieren
-              </button>
-
-
-              <button
-                class="sidebar-action danger"
-                id="deletePage"
-                type="button"
-              >
-                Seite löschen
-              </button>
-
-            </div>
-
-          </aside>
-
-
-          <!-- Paper -->
-
-          <div class="paper-area">
-
-            <div
-              class="paper"
-              id="paper"
-            >
-
-              <div class="paper-top">
-
-                <span
-                  class="paper-page-number"
-                  id="paperPageNumber"
-                >
-                  Seite 1
-                </span>
-
-              </div>
-
-
-              <input
-                id="pageTitle"
-                class="page-title"
-                type="text"
-                placeholder="Seitentitel..."
-                spellcheck="true"
-              >
-
-
-              <textarea
-                id="pageContent"
-                class="page-content"
-                placeholder="Beginne hier zu schreiben..."
-                spellcheck="true"
-              ></textarea>
-
-
-              <div class="paper-footer">
-
-                <span>
-                  StudyInk
-                </span>
-
-                <span id="paperWordCount">
-                  0 Wörter
-                </span>
-
-              </div>
-
+              id="textLayer">
             </div>
 
           </div>
@@ -760,363 +529,108 @@
         </div>
 
 
-        <!-- Floating notebook tools -->
+
+        <!-- =====================================
+             SEITENZÄHLER
+        ====================================== -->
 
         <div
-          class="notebook-floating-tools"
-          id="notebookTools"
-        >
+          id="pageIndicator"
+          class="page-indicator">
 
-          <button
-            class="floating-tool active"
-            type="button"
-            data-tool="select"
-            title="Auswählen"
-          >
-            ↖
-          </button>
-
-
-          <button
-            class="floating-tool"
-            type="button"
-            data-tool="pen"
-            title="Stift"
-          >
-            ✎
-          </button>
-
-
-          <button
-            class="floating-tool"
-            type="button"
-            data-tool="highlight"
-            title="Text markieren"
-          >
-            ▬
-          </button>
-
-
-          <button
-            class="floating-tool"
-            type="button"
-            data-tool="eraser"
-            title="Radierer"
-          >
-            ◇
-          </button>
+          1 von 2
 
         </div>
 
-      </section>
-
-    </main>
-
-  </div>
+      </main>
 
 
-  <!-- =====================================================
-       NEW DOCUMENT MENU
-  ====================================================== -->
 
-  <div
-    class="floating-menu hidden"
-    id="newMenu"
-    role="menu"
-  >
+      <!-- =========================================
+           SPEICHERSTATUS
+      ========================================== -->
 
-    <div class="floating-menu-title">
-      Neu erstellen
-    </div>
+      <div
+        id="saveStatus"
+        class="save-status">
 
-
-    <button
-      class="menu-item"
-      type="button"
-      data-create="notebook"
-    >
-      <span class="mini-icon icon-doc"></span>
-      <span>Notizbuch</span>
-    </button>
-
-
-    <button
-      class="menu-item"
-      type="button"
-      data-create="quick-note"
-    >
-      <span class="mini-icon icon-note"></span>
-      <span>Schnellnotiz</span>
-    </button>
-
-
-    <button
-      class="menu-item"
-      type="button"
-      data-create="text"
-    >
-      <span class="mini-icon icon-doc"></span>
-      <span>Text Document</span>
-      <span class="tag beta">BETA</span>
-    </button>
-
-
-    <button
-      class="menu-item"
-      type="button"
-      data-create="whiteboard"
-    >
-      <span class="mini-icon icon-board"></span>
-      <span>Whiteboard</span>
-      <span class="tag new">NEW</span>
-    </button>
-
-
-    <button
-      class="menu-item"
-      type="button"
-      data-create="folder"
-    >
-      <span class="mini-icon icon-folder"></span>
-      <span>Ordner</span>
-    </button>
-
-
-    <button
-      class="menu-item"
-      type="button"
-      data-create="image"
-    >
-      <span class="mini-icon icon-image"></span>
-      <span>Bild</span>
-    </button>
-
-  </div>
-
-
-  <!-- =====================================================
-       SEARCH PANEL
-  ====================================================== -->
-
-  <div
-    class="search-panel hidden"
-    id="searchPanel"
-  >
-
-    <div class="panel-header">
-
-      <div>
-
-        <h3>
-          Suche
-        </h3>
-
-        <small>
-          Finde deine Notizen
-        </small>
+        Gespeichert
 
       </div>
 
 
-      <button
-        class="close-panel"
-        type="button"
-        data-close="search"
-      >
-        ×
-      </button>
 
-    </div>
+      <!-- =========================================
+           TEXTWERKZEUG INPUT
+      ========================================== -->
 
-
-    <div class="search-input-wrap">
-
-      <span class="search-input-icon"></span>
-
-      <input
-        id="globalSearch"
-        type="search"
-        placeholder="Dokumente, Notizen, Ideen..."
-        autocomplete="off"
-      >
-
-    </div>
+      <textarea
+        id="textInput"
+        class="text-input"
+        placeholder="Text eingeben...">
+      </textarea>
 
 
-    <div
-      class="search-result-list"
-      id="searchResults"
-    ></div>
 
-  </div>
+      <!-- =========================================
+           SUCHE
+      ========================================== -->
+
+      <div
+        id="searchOverlay"
+        class="overlay hidden">
 
 
-  <!-- =====================================================
-       SETTINGS
-  ====================================================== -->
+        <div class="search-dialog">
 
-  <div
-    class="settings-panel hidden"
-    id="settingsPanel"
-  >
 
-    <div class="panel-header">
+          <button
+            id="closeSearch"
+            class="close"
+            title="Schließen">
+            ×
+          </button>
 
-      <div>
 
-        <h3>
-          Einstellungen
-        </h3>
+          <h2>
+            Notizbuch durchsuchen
+          </h2>
 
-        <small>
-          StudyInk anpassen
-        </small>
+
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Nach Text suchen …">
+
+
+          <div
+            id="searchResults">
+          </div>
+
+
+        </div>
 
       </div>
 
 
-      <button
-        class="close-panel"
-        type="button"
-        data-close="settings"
-      >
-        ×
-      </button>
 
-    </div>
+      <!-- =========================================
+           TOAST / STATUSMELDUNG
+      ========================================== -->
 
+      <div
+        id="toast"
+        class="toast">
+      </div>
 
-    <div class="settings-list">
-
-      <button
-        class="setting-item"
-        type="button"
-        data-setting="appearance"
-      >
-        <span>
-          Aussehen
-        </span>
-
-        <span>
-          ›
-        </span>
-      </button>
-
-
-      <button
-        class="setting-item"
-        type="button"
-        data-setting="notifications"
-      >
-        <span>
-          Benachrichtigungen
-        </span>
-
-        <span>
-          ›
-        </span>
-      </button>
-
-
-      <button
-        class="setting-item"
-        type="button"
-        data-setting="sync"
-      >
-        <span>
-          Cloud-Sync
-        </span>
-
-        <span>
-          ›
-        </span>
-      </button>
-
-
-      <button
-        class="setting-item"
-        type="button"
-        data-setting="security"
-      >
-        <span>
-          Sicherheit
-        </span>
-
-        <span>
-          ›
-        </span>
-      </button>
-
-    </div>
+    </section>
 
   </div>
 
 
-  <!-- =====================================================
-       CONFIRM MODAL
-  ====================================================== -->
-
-  <div
-    class="modal-overlay hidden"
-    id="confirmModal"
-  >
-
-    <div class="confirm-modal">
-
-      <div class="confirm-icon">
-        !
-      </div>
-
-      <h3 id="confirmTitle">
-        Seite löschen?
-      </h3>
-
-      <p id="confirmMessage">
-        Diese Aktion kann nicht rückgängig gemacht werden.
-      </p>
-
-
-      <div class="confirm-actions">
-
-        <button
-          class="editor-secondary"
-          id="confirmCancel"
-          type="button"
-        >
-          Abbrechen
-        </button>
-
-
-        <button
-          class="danger-button"
-          id="confirmAccept"
-          type="button"
-        >
-          Löschen
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
-       TOAST
-  ====================================================== -->
-
-  <div
-    class="studyink-toast"
-    id="toast"
-    role="status"
-    aria-live="polite"
-  ></div>
-
-
-  <!-- =====================================================
-       SCRIPT
-  ====================================================== -->
+  <!-- ===========================================
+       JAVASCRIPT
+  ============================================ -->
 
   <script src="app.js"></script>
 

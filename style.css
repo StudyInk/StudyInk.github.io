@@ -15,3 +15,38 @@ nav{display:grid;gap:6px}
 .new-wrap{position:relative}.new-btn{border:0;background:#168fe9;color:#fff;padding:13px 20px;border-radius:11px;font-weight:750;font-size:16px;box-shadow:0 3px 10px #0003}.new-btn span{margin-left:8px}.new-menu{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);width:290px;background:#252326;border:1px solid #444044;border-radius:11px;box-shadow:0 16px 45px #0009;padding:8px;display:none;text-align:left;z-index:20}.new-menu.open{display:block}.menu-section{color:#8e898c;font-size:10px;font-weight:800;letter-spacing:.1em;padding:8px 9px 5px}.new-menu button{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;border-radius:7px;padding:9px;color:#eee;font-size:18px}.new-menu button:hover{background:#353136}.new-menu button>span{display:flex;flex-direction:column;align-items:flex-start;flex:1}.new-menu b{font-size:14px;font-weight:600}.new-menu small{font-size:10px;color:#8f8b8e;margin-top:2px}.new-menu em{font-style:normal;font-size:9px;background:#dce9a2;color:#31361d;padding:4px 7px;border-radius:10px}.new-menu em:not(.new){background:#d9d4e8;color:#4c4657}.menu-divider{height:1px;background:#3b383b;margin:7px -8px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#fff;color:#171516;border-radius:10px;padding:11px 16px;box-shadow:0 8px 30px #0007;transition:.2s;font-size:13px}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:800px){.sidebar{width:220px}.main{margin-left:220px}.wordmark{font-size:28px}.title-row h1{font-size:38px}.new-menu{left:auto;right:0;transform:none}}
+
+/* StudyInk rich-text editor styles */
+.ql-adm{position:absolute;pointer-events:auto;isolation:isolate}
+.ql-adm.ql-disabled{pointer-events:none}
+.ql-adm .ql-highlight-overlay{position:absolute;inset:0 auto auto 0;width:100%;height:100%;pointer-events:none;z-index:0}
+.ql-adm .ql-editor{position:relative;z-index:1;touch-action:manipulation;font-family:var(--ql-editor-font-family,Helvetica Neue),Helvetica,Arial,"Liberation Sans",sans-serif;font-size:var(--ql-editor-font-size,16px);line-height:normal;text-align:left;word-break:break-word;text-wrap-mode:wrap;white-space-collapse:break-spaces;tab-size:28px;padding-top:var(--ql-editor-padding-top,0px);padding-bottom:var(--ql-editor-padding-bottom,0px);padding-left:var(--ql-editor-padding-left,0px);padding-right:var(--ql-editor-padding-right,0px);box-sizing:border-box;width:var(--ql-editor-width,max-content);min-width:var(--ql-editor-min-width,auto);max-width:var(--ql-editor-max-width,auto);--ql-editor-marker-lane-width:28px;--ql-editor-indent-width:28px}
+.ql-adm .ql-editor.ql-blank{position:relative}
+.ql-adm .ql-editor.ql-blank:before{position:absolute;left:1rem;content:attr(data-placeholder);font-style:italic;pointer-events:none;color:#888}
+.ql-adm .ql-editor:focus,.ql-adm .ql-editor:focus-within{outline:none}
+.ql-adm .ql-editor [data-font-family="Noto Sans"]{font-family:Noto Sans,Arial,sans-serif!important}
+.ql-adm .ql-editor [data-font-family="Noto Serif"]{font-family:"Noto Serif",Georgia,serif!important}
+.ql-adm .ql-editor [data-font-family="Noto Sans Mono"]{font-family:Noto Sans Mono,"Courier New",monospace!important}
+.ql-adm .ql-editor *{margin:0;padding:0;border:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-decoration-thickness:max(1px,round(down,.1em,1px))}
+.ql-adm .ql-editor :is(p,h1,h2,h3,h4,h5,h6):empty:before{content:" "}
+.ql-adm .ql-editor :is(p,h1,h2,h3,h4,h5,h6,li):has(>br:only-child){color:var(--ql-empty-block-color,inherit);font-size:var(--ql-empty-block-font-size,inherit)}
+.ql-adm .ql-editor a,.ql-adm .ql-editor a:link,.ql-adm .ql-editor a:visited,.ql-adm .ql-editor a:active,.ql-adm .ql-editor a:hover{color:currentColor;text-decoration-style:dashed;text-decoration-line:underline;text-decoration-skip-ink:none;text-underline-offset:3px}
+.ql-adm .ql-editor :where(h1){font-size:48px}.ql-adm .ql-editor :where(h2){font-size:36px}.ql-adm .ql-editor :where(h3){font-size:28px}.ql-adm .ql-editor :where(h4){font-size:24px}.ql-adm .ql-editor :where(h5){font-size:20px}.ql-adm .ql-editor :where(h6){font-size:16px}
+.ql-adm .ql-editor ol,.ql-adm .ql-editor ul{list-style-type:"";margin:0;padding-left:var(--ql-editor-marker-lane-width);counter-reset:c}
+.ql-adm .ql-editor li{padding:0}
+.ql-adm .ql-editor li:before{display:inline-block;min-width:var(--ql-editor-marker-lane-width);margin-left:calc(-1 * var(--ql-editor-marker-lane-width));margin-right:min(.1em,2px);text-align:center;white-space:nowrap;font-size:max(16px,var(--ql-editor-list-marker-font-size,1em));color:var(--ql-editor-list-marker-color,currentColor)}
+.ql-adm .ql-editor li[data-list-style=bullet]:before{content:"•";font-family:"Times New Roman",serif;line-height:0}
+.ql-adm .ql-editor li[data-list-style=bullet][data-list-depth="1"]:before{content:"◦"}
+.ql-adm .ql-editor li[data-list-style=bullet][data-list-depth="2"]:before{content:"▪"}
+.ql-adm .ql-editor li[data-list-style=ordered]{counter-set:c var(--ql-editor-list-counter)}
+.ql-adm .ql-editor li[data-list-style=ordered]:before{text-align:left;content:counter(c,decimal) ". "}
+.ql-adm .ql-editor li[data-list-style=ordered][data-list-depth="1"]:before{content:counter(c,lower-alpha) ". "}
+.ql-adm .ql-editor li[data-list-style=ordered][data-list-depth="2"]:before{content:counter(c,lower-roman) ". "}
+.ql-adm .ql-editor [data-font-size]{font-size:var(--ql-editor-font-size)}
+.ql-adm .ql-editor [data-line-height]{line-height:var(--ql-editor-line-height)}
+.ql-adm .ql-editor [data-paragraph-spacing-after]{padding-bottom:var(--ql-editor-paragraph-spacing-after)}
+.ql-adm .ql-editor [data-paragraph-spacing-before]{padding-top:var(--ql-editor-paragraph-spacing-before)}
+.ql-adm .ql-editor [data-indent][data-list-style]{--reserved-space-for-marker:var(--ql-editor-marker-lane-width)}
+.ql-adm .ql-editor [data-indent]{--reserved-space-for-marker:0px;--indent:calc(var(--ql-editor-indent) * var(--ql-editor-indent-width));--max-width-inside-padding:calc(var(--ql-editor-max-width) - var(--ql-editor-padding-left,0px) - var(--ql-editor-padding-right,0px) - var(--reserved-space-for-marker));--max-indent:calc(var(--max-width-inside-padding) - 1em);padding-left:min(var(--indent),var(--max-indent))}
+.ql-adm .ql-editor [data-line-height] *,.ql-adm .ql-editor li[data-line-height]:before{line-height:min(var(--ql-editor-line-height),var(--ql-editor-font-size));vertical-align:bottom}
+.ql-adm .ql-editor .ql-align-center{text-align:center}.ql-adm .ql-editor .ql-align-right{text-align:right}

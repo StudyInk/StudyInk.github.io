@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>StudyInk</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <strong>StudyInk</strong>
+        <span>AI notebook</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="newPageBtn" class="ghost">＋ New page</button>
+      <button id="saveBtn" class="primary">Save</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-title">
+        <span>My notebook</span>
+        <button id="addPageBtn" class="icon-btn" title="New page">＋</button>
+      </div>
+      <div id="pageList" class="page-list"></div>
+      <div class="sidebar-bottom">
+        <label class="upload-btn">
+          <input id="fileInput" type="file" accept="image/*,.pdf">
+          📎 Import image/PDF
+        </label>
+        <button id="clearStorageBtn" class="danger-ghost">Reset local data</button>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button class="tool active" data-tool="pen">✎ Pen</button>
+          <button class="tool" data-tool="eraser">⌫ Eraser</button>
+          <button class="tool" data-tool="highlighter">▰ Highlighter</button>
+        </div>
+        <div class="tool-group">
+          <label class="control">Color <input id="colorPicker" type="color" value="#111827"></label>
+          <label class="control">Size <input id="sizeRange" type="range" min="1" max="40" value="4"><output id="sizeValue">4</output></label>
+        </div>
+        <div class="tool-group">
+          <button id="undoBtn" class="tool">↶</button>
+          <button id="redoBtn" class="tool">↷</button>
+          <button id="clearBtn" class="tool">Clear</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <div class="paper" id="paper">
+          <div id="importLayer"></div>
+          <canvas id="inkCanvas"></canvas>
+          <div id="textHint" class="paper-hint">Write your homework here with a mouse, touchscreen, or stylus.</div>
+        </div>
+      </div>
+
+      <div class="statusbar">
+        <span id="saveStatus">Saved locally</span>
+        <span>StudyInk v1 • Frontend prototype</span>
+      </div>
+    </section>
+
+    <aside class="ai-panel">
+      <div class="ai-header">
+        <div>
+          <span class="eyebrow">STUDYINK AI</span>
+          <h2>Your study copilot</h2>
+        </div>
+        <span class="online-dot">● Local</span>
+      </div>
+
+      <div class="mode-grid">
+        <button class="mode active" data-mode="solve">🧮 Solve</button>
+        <button class="mode" data-mode="explain">💡 Explain</button>
+        <button class="mode" data-mode="check">✅ Check</button>
+        <button class="mode" data-mode="research">🌐 Research</button>
+        <button class="mode" data-mode="summarize">📚 Summarize</button>
+        <button class="mode" data-mode="quiz">🎯 Quiz me</button>
+      </div>
+
+      <div id="chat" class="chat">
+        <div class="message ai">
+          <strong>Hi! I'm StudyInk AI.</strong>
+          <p>This first version runs entirely in your browser. Try a mode above, then type a question below. The AI panel is ready to connect to a real AI/web-search backend later.</p>
+        </div>
+      </div>
+
+      <form id="aiForm" class="ai-form">
+        <textarea id="aiInput" rows="3" placeholder="Ask StudyInk something..."></textarea>
+        <div class="ai-form-row">
+          <button type="button" id="usePageBtn" class="secondary">＋ Use page</button>
+          <button class="primary" type="submit">Ask AI ↗</button>
+        </div>
+      </form>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

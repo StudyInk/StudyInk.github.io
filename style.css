@@ -72,3 +72,18 @@ button,input,textarea{font:inherit}button{border:0}.hidden{display:none!importan
 .toast{position:absolute;z-index:300;left:50%;bottom:92px;transform:translate(-50%,20px);padding:9px 14px;color:#fff;background:#202733;border-radius:8px;box-shadow:0 8px 25px rgba(31,41,55,.2);opacity:0;pointer-events:none;transition:.2s ease;font-size:13px}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:1100px){.top-tools .top-button{width:34px}.top-tools i{margin:0 3px}.paper{width:720px;height:932px}}
 @media(max-width:800px){.topbar{padding:0 6px}.top-left{min-width:0}.book-name{max-width:150px}.top-tools .top-button:nth-of-type(-n+4){display:none}.pen-palette{bottom:10px;max-width:calc(100% - 20px);overflow-x:auto}.paper-stage{padding:55px 20px 90px}.paper{width:620px;height:804px}.library-sidebar{width:190px}.library-main{padding:30px 24px}}
+
+.system-panel{position:absolute;z-index:500;top:54px;right:12px;width:260px;padding:10px;background:rgba(255,255,255,.98);border:1px solid #dfe3e8;border-radius:10px;box-shadow:0 16px 45px rgba(31,41,55,.18);color:#202733}
+.system-panel.hidden{display:none}
+.system-panel-title{padding:7px 9px 9px;font-size:12px;font-weight:800;color:#7a8491;text-transform:uppercase;letter-spacing:1.2px}
+.system-panel button{width:100%;min-height:38px;display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:7px;background:transparent;color:#3f4854;text-align:left;cursor:pointer}
+.system-panel button:hover{background:#edf4ff;color:#2f80ed}
+.system-panel button span{font-size:13px}
+.system-divider{height:1px;margin:7px 4px;background:#e7eaee}
+.zoom-row{display:flex;align-items:center;gap:5px;padding:3px}
+.zoom-row button{width:auto;min-height:32px;justify-content:center;padding:6px 9px}
+.zoom-row strong{flex:1;text-align:center;font-size:12px}
+:root[data-studyink-theme="soft-dark"] .workspace{background:#e9edf2}
+:root[data-studyink-theme="soft-dark"] .system-panel{background:#20252b;color:#eef2f6;border-color:#343b43}
+:root[data-studyink-theme="soft-dark"] .system-panel button{color:#dce3e9}
+:root[data-studyink-theme="soft-dark"] .system-panel button:hover{background:#2c353f;color:#70aaff}

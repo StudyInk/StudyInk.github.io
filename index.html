@@ -3,636 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>StudyInk – Notizbuch</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
   <div id="app">
-
-    <!-- =========================================
-         STUDYINK BIBLIOTHEK
-    ========================================== -->
-
     <section id="libraryView" class="library-view hidden">
-
       <aside class="library-sidebar">
-
-        <div class="brand">
-          StudyInk
-        </div>
-
-        <button class="nav active">
-          ▣
-          <span>Dokumente</span>
-        </button>
-
-        <button class="nav">
-          ☆
-          <span>Favoriten</span>
-        </button>
-
-        <button class="nav">
-          ⇄
-          <span>Geteilt</span>
-        </button>
-
-        <button class="nav">
-          ⌫
-          <span>Papierkorb</span>
-        </button>
-
+        <div class="brand">StudyInk</div>
+        <button class="nav active">▣ <span>Dokumente</span></button>
+        <button class="nav">☆ <span>Favoriten</span></button>
+        <button class="nav">⇄ <span>Geteilt</span></button>
+        <button class="nav">⌫ <span>Papierkorb</span></button>
       </aside>
-
-
       <main class="library-main">
-
         <header class="library-header">
-
-          <div>
-            <small>STUDYINK</small>
-            <h1>Meine Notizen</h1>
-          </div>
-
-          <button
-            id="newNotebook"
-            class="primary">
-            ＋ Neues Notizbuch
-          </button>
-
+          <div><small>STUDYINK</small><h1>Meine Notizen</h1></div>
+          <button id="newNotebook" class="primary">＋ Neues Notizbuch</button>
         </header>
-
-
-        <div
-          id="documentGrid"
-          class="document-grid">
-        </div>
-
+        <div id="documentGrid" class="document-grid"></div>
       </main>
-
     </section>
 
-
-    <!-- =========================================
-         NOTIZBUCH EDITOR
-    ========================================== -->
-
-    <section
-      id="notebookView"
-      class="notebook-view">
-
-
-      <!-- =====================================
-           TOP TOOLBAR
-      ====================================== -->
-
+    <section id="notebookView" class="notebook-view">
       <header class="topbar">
-
-        <!-- Linke Seite -->
-
         <div class="top-left">
-
-          <button
-            id="backButton"
-            class="top-button home"
-            title="Zurück">
-            ⌂
+          <button id="backButton" class="top-button home" title="Zurück">⌂</button>
+          <button id="renameButton" class="book-name" title="Notizbuch umbenennen">
+            <span id="bookTitle">Unbenanntes Notizbuch</span><span>⌄</span>
           </button>
-
-
-          <button
-            id="renameButton"
-            class="book-name"
-            title="Notizbuch umbenennen">
-
-            <span id="bookTitle">
-              Unbenanntes Notizbuch
-            </span>
-
-            <span>
-              ⌄
-            </span>
-
-          </button>
-
         </div>
-
-
-        <!-- =================================
-             RECHTE WERKZEUGLEISTE
-        ================================== -->
-
         <div class="top-tools">
-
-
-          <!-- Seiten -->
-
-          <button
-            id="pagesButton"
-            class="top-button"
-            title="Seitenübersicht">
-            ▣
-          </button>
-
-
-          <!-- Suche -->
-
-          <button
-            id="searchButton"
-            class="top-button"
-            title="Suchen">
-            ⌕
-          </button>
-
-
-          <!-- Dokumente -->
-
-          <button
-            class="top-button"
-            title="Dokumente">
-            ▤
-          </button>
-
-
-          <!-- Auswahl -->
-
-          <button
-            class="top-button"
-            title="Auswahl">
-            ⌁
-          </button>
-
-
+          <button id="pagesButton" class="top-button" title="Seitenübersicht">▣</button>
+          <button id="searchButton" class="top-button" title="Suchen">⌕</button>
+          <button class="top-button" title="Dokumente">▤</button>
+          <button class="top-button" title="Auswahl">⌁</button>
           <i></i>
-
-
-          <!-- ================================
-               ZEICHENWERKZEUGE
-          ================================= -->
-
-          <button
-            class="top-button active"
-            data-tool="pen"
-            title="Stift">
-            ✎
-          </button>
-
-
-          <button
-            class="top-button"
-            data-tool="eraser"
-            title="Radierer">
-            ⌫
-          </button>
-
-
-          <button
-            class="top-button"
-            data-tool="text"
-            title="Text">
-            T
-          </button>
-
-
-          <button
-            class="top-button"
-            data-tool="lasso"
-            title="Lasso">
-            ◌
-          </button>
-
-
-          <button
-            class="top-button"
-            data-tool="image"
-            title="Bild">
-            ▧
-          </button>
-
-
-          <button
-            class="top-button"
-            data-tool="shapes"
-            title="Formen">
-            △
-          </button>
-
-
-          <button
-            class="top-button"
-            title="Kommentar">
-            ▱
-          </button>
-
-
-          <button
-            class="top-button"
-            title="Laser">
-            ✧
-          </button>
-
-
+          <button class="top-button active" data-tool="pen" title="Stift">✎</button>
+          <button class="top-button" data-tool="eraser" title="Radierer">⌫</button>
+          <button class="top-button" data-tool="text" title="Text">T</button>
+          <button class="top-button" data-tool="lasso" title="Lasso">◌</button>
+          <button class="top-button" data-tool="image" title="Bild">▧</button>
+          <button class="top-button" data-tool="shapes" title="Formen">△</button>
+          <button class="top-button" title="Kommentar">▱</button>
+          <button class="top-button" title="Laser">✧</button>
           <i></i>
-
-
-          <!-- Audio -->
-
-          <button
-            class="top-button"
-            title="Audio">
-            ♩
-          </button>
-
-
-          <button
-            class="top-button"
-            title="Aufnahme">
-            ♙
-          </button>
-
-
-          <button
-            class="top-button"
-            title="Weitere Optionen">
-            ⌄
-          </button>
-
-
+          <button class="top-button" title="Audio">♩</button>
+          <button class="top-button" title="Aufnahme">♙</button>
+          <button class="top-button" title="Weitere Optionen">⌄</button>
           <i></i>
-
-
-          <!-- Neue Seite -->
-
-          <button
-            id="addPageTop"
-            class="top-button"
-            title="Neue Seite">
-            ＋
-          </button>
-
-
-          <!-- Teilen -->
-
-          <button
-            class="top-button"
-            title="Teilen">
-            ↥
-          </button>
-
-
-          <!-- Mehr -->
-
-          <button
-            class="top-button"
-            title="Mehr">
-            •••
-          </button>
-
+          <button id="addPageTop" class="top-button" title="Neue Seite">＋</button>
+          <button class="top-button" title="Teilen">↥</button>
+          <button class="top-button" title="Mehr">•••</button>
         </div>
-
       </header>
 
-
-
-      <!-- =========================================
-           UNDO / REDO
-      ========================================== -->
-
       <div class="history">
-
-        <button
-          id="undo"
-          title="Rückgängig">
-          ↶
-        </button>
-
-        <button
-          id="redo"
-          title="Wiederholen">
-          ↷
-        </button>
-
+        <button id="undo" title="Rückgängig">↶</button>
+        <button id="redo" title="Wiederholen">↷</button>
       </div>
 
-
-
-      <!-- =========================================
-           SCHWEBENDE STIFT-LEISTE
-      ========================================== -->
-
-      <div
-        id="penPalette"
-        class="pen-palette">
-
-
-        <!-- Stift -->
-
-        <button
-          class="palette-tool selected"
-          data-tool="pen"
-          title="Stift">
-          ✒
-        </button>
-
-
-        <!-- Marker -->
-
-        <button
-          class="palette-tool"
-          data-tool="highlighter"
-          title="Marker">
-          ⌁
-        </button>
-
-
-        <!-- Radierer -->
-
-        <button
-          class="palette-tool"
-          data-tool="eraser"
-          title="Radierer">
-          ◩
-        </button>
-
-
-        <!-- Lasso -->
-
-        <button
-          class="palette-tool"
-          data-tool="lasso"
-          title="Lasso">
-          ◫
-        </button>
-
-
-        <!-- Formen -->
-
-        <button
-          class="palette-tool"
-          data-tool="shapes"
-          title="Formen">
-          ◌
-        </button>
-
-
+      <div id="penPalette" class="pen-palette">
+        <button class="palette-tool selected" data-tool="pen" title="Stift">✒</button>
+        <button class="palette-tool" data-tool="highlighter" title="Marker">⌁</button>
+        <button class="palette-tool" data-tool="eraser" title="Radierer">◩</button>
+        <button class="palette-tool" data-tool="lasso" title="Lasso">◫</button>
+        <button class="palette-tool" data-tool="shapes" title="Formen">◌</button>
         <span class="divider"></span>
-
-
-        <!-- =====================================
-             STIFTGRÖSSE
-        ====================================== -->
-
-        <button
-          id="sizeDown"
-          title="Dünner">
-          −
-        </button>
-
-
-        <button
-          id="sizeDisplay"
-          class="size-display"
-          title="Aktuelle Stiftgröße">
-          ●
-        </button>
-
-
-        <button
-          id="sizeUp"
-          title="Dicker">
-          +
-        </button>
-
-
-        <button
-          id="sizeMenu"
-          title="Stiftgröße">
-          ⌄
-        </button>
-
-
-        <!-- =====================================
-             FARBEN
-        ====================================== -->
-
-        <button
-          class="color blue"
-          data-color="#1685f7"
-          title="Blau">
-        </button>
-
-
-        <button
-          class="color black selected-color"
-          data-color="#111111"
-          title="Schwarz">
-        </button>
-
-
-        <button
-          class="color white"
-          data-color="#ffffff"
-          title="Weiß">
-        </button>
-
-
-        <button
-          class="more-colors"
-          title="Weitere Farben">
-          ⊕
-        </button>
-
+        <button id="sizeDown" title="Dünner">−</button>
+        <button id="sizeDisplay" class="size-display" title="Aktuelle Stiftgröße">●</button>
+        <button id="sizeUp" title="Dicker">+</button>
+        <button id="sizeMenu" title="Stiftgröße">⌄</button>
+        <button class="color blue" data-color="#1685f7" title="Blau"></button>
+        <button class="color black selected-color" data-color="#111111" title="Schwarz"></button>
+        <button class="color white" data-color="#ffffff" title="Weiß"></button>
+        <button class="more-colors" title="Weitere Farben">⊕</button>
       </div>
-
-
-
-      <!-- =========================================
-           EDITOR ARBEITSBEREICH
-      ========================================== -->
 
       <main class="workspace">
-
-
-        <!-- =====================================
-             SEITENLEISTE
-        ====================================== -->
-
-        <aside
-          id="pageSidebar"
-          class="page-sidebar">
-
-
-          <div class="sidebar-title">
-
-            <b>
-              Seiten
-            </b>
-
-            <button
-              id="addPage"
-              title="Neue Seite">
-              ＋
-            </button>
-
-          </div>
-
-
-          <div id="pageList">
-          </div>
-
+        <aside id="pageSidebar" class="page-sidebar">
+          <div class="sidebar-title"><b>Seiten</b><button id="addPage" title="Neue Seite">＋</button></div>
+          <div id="pageList"></div>
         </aside>
 
-
-
-        <!-- =====================================
-             PAPIER
-        ====================================== -->
-
-        <div
-          id="paperStage"
-          class="paper-stage">
-
-
-          <div
-            id="paper"
-            class="paper">
-
-
-            <!-- Kariertes Papier -->
-
-            <div class="grid">
-            </div>
-
-
-            <!-- =================================
-                 ECHTES ZEICHEN-CANVAS
-            ================================== -->
-
-            <canvas
-              id="canvas">
-            </canvas>
-
-
-            <!-- =================================
-                 TEXT-LAYER
-            ================================== -->
-
-            <div
-              id="textLayer">
-            </div>
-
+        <div id="paperStage" class="paper-stage">
+          <div id="paper" class="paper">
+            <div class="grid"></div>
+            <canvas id="canvas"></canvas>
+            <div id="textLayer"></div>
           </div>
-
         </div>
 
-
-
-        <!-- =====================================
-             SEITENZÄHLER
-        ====================================== -->
-
-        <div
-          id="pageIndicator"
-          class="page-indicator">
-
-          1 von 2
-
-        </div>
-
+        <div id="pageIndicator" class="page-indicator">1 von 2</div>
       </main>
 
+      <div id="saveStatus" class="save-status">Gespeichert</div>
+      <textarea id="textInput" class="text-input" placeholder="Text eingeben..."></textarea>
 
-
-      <!-- =========================================
-           SPEICHERSTATUS
-      ========================================== -->
-
-      <div
-        id="saveStatus"
-        class="save-status">
-
-        Gespeichert
-
-      </div>
-
-
-
-      <!-- =========================================
-           TEXTWERKZEUG INPUT
-      ========================================== -->
-
-      <textarea
-        id="textInput"
-        class="text-input"
-        placeholder="Text eingeben...">
-      </textarea>
-
-
-
-      <!-- =========================================
-           SUCHE
-      ========================================== -->
-
-      <div
-        id="searchOverlay"
-        class="overlay hidden">
-
-
+      <div id="searchOverlay" class="overlay hidden">
         <div class="search-dialog">
-
-
-          <button
-            id="closeSearch"
-            class="close"
-            title="Schließen">
-            ×
-          </button>
-
-
-          <h2>
-            Notizbuch durchsuchen
-          </h2>
-
-
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="Nach Text suchen …">
-
-
-          <div
-            id="searchResults">
-          </div>
-
-
+          <button id="closeSearch" class="close" title="Schließen">×</button>
+          <h2>Notizbuch durchsuchen</h2>
+          <input id="searchInput" type="search" placeholder="Nach Text suchen …">
+          <div id="searchResults"></div>
         </div>
-
       </div>
 
-
-
-      <!-- =========================================
-           TOAST / STATUSMELDUNG
-      ========================================== -->
-
-      <div
-        id="toast"
-        class="toast">
-      </div>
-
+      <div id="toast" class="toast"></div>
     </section>
-
   </div>
 
-
-  <!-- ===========================================
-       JAVASCRIPT
-  ============================================ -->
-
   <script src="app.js"></script>
-
+  <script src="enhancements.js"></script>
 </body>
 </html>

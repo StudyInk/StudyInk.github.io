@@ -376,9 +376,67 @@
     if (e.key === "0") setZoom(100);
   }
 
+  function addStudyAssistant() {
+    const root = document.querySelector(".notebook-view");
+    if (!root || document.getElementById("studyAssistant")) return;
+    const dock = document.createElement("section");
+    dock.id = "studyAssistant";
+    dock.className = "study-assistant";
+    dock.setAttribute("aria-label", "StudyInk Schnellaktionen");
+    dock.innerHTML = `
+      <div class="assistant-orb" aria-hidden="true">✦</div>
+      <div class="assistant-actions">
+        <button type="button" data-assistant="summary">✧ Zusammenfassen</button>
+        <button type="button" data-assistant="ideas">✧ Vorschläge</button>
+      </div>
+      <div class="assistant-result" id="assistantResult" role="status" aria-live="polite" hidden>
+        <button type="button" class="assistant-close" aria-label="Schließen">×</button>
+        <strong id="assistantResultTitle"></strong>
+        <p id="assistantResultText"></p>
+        <small>Lokale Auswertung deiner getippten Notizen · keine Daten werden hochgeladen</small>
+      </div>`;
+    root.appendChild(dock);
+    dock.addEventListener("click", (event) => {
+      const action = event.target.closest("[data-assistant]");
+      if (action) {
+        const kind = action.dataset.assistant;
+        const page = typeof getCurrentPage === "function" ? getCurrentPage() : null;
+        const notes = (page && Array.isArray(page.texts) ? page.texts : [])
+          .map(item => String(item.text || "").trim()).filter(Boolean);
+        const result = dock.querySelector("#assistantResult");
+        const title = dock.querySelector("#assistantResultTitle");
+        const output = dock.querySelector("#assistantResultText");
+        if (!notes.length) {
+          title.textContent = "Noch keine Textnotizen";
+          output.textContent = "Füge mit dem Textwerkzeug Notizen hinzu. Handschrift und PDF-Inhalte werden hier nicht automatisch erkannt.";
+        } else if (kind === "summary") {
+          const text = notes.join(" ").replace(/\\s+/g, " ").trim();
+          const sentences = text.match(/[^.!?]+[.!?]?/g) || [text];
+          const chosen = sentences.length <= 3 ? sentences : [sentences[0], sentences[Math.floor((sentences.length - 1) / 2)], sentences[sentences.length - 1]];
+          title.textContent = "Kurzfassung";
+          output.textContent = chosen.join(" ").slice(0, 650);
+        } else {
+          const text = notes.join(" ").toLowerCase();
+          const ideas = [];
+          if (/projekt|plan|ziel|aufgabe|deadline|termin/.test(text)) ideas.push("Erstelle eine kurze Aufgabenliste mit Verantwortlichen und Terminen.");
+          if (/meeting|besprech|notiz|idee/.test(text)) ideas.push("Fasse die wichtigsten Entscheidungen in drei Stichpunkten zusammen.");
+          if (/lernen|prüfung|vokabel|formel|kapitel/.test(text)) ideas.push("Mache aus den Notizen Karteikarten oder eine kleine Selbstkontrolle.");
+          if (/frage|unklar|prüfen|offen/.test(text)) ideas.push("Markiere offene Fragen und ergänze eine Quelle oder Erklärung.");
+          if (!ideas.length) ideas.push("Ordne die Notizen in Überschriften und Stichpunkte und markiere die wichtigste Aussage.");
+          title.textContent = "Nächste Schritte";
+          output.textContent = ideas.join(" ");
+        }
+        result.hidden = false;
+        return;
+      }
+      if (event.target.closest(".assistant-close")) dock.querySelector("#assistantResult").hidden = true;
+    });
+  }
+
   function start() {
     loadPrefs();
     addSystemUI();
+    addStudyAssistant();
     document.documentElement.dataset.studyinkTheme = prefs.theme === "soft-dark" ? "soft-dark" : "light";
     setZoom(zoomValue);
     document.addEventListener("keydown", keyboardEnhancements);

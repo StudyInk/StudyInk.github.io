@@ -1072,7 +1072,7 @@ function handlePointerUp(event) {
 
   if (
     currentStroke &&
-    currentStroke.points.length > 1
+    currentStroke.points.length >= 1
   ) {
 
     const page =

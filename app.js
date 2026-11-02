@@ -642,6 +642,42 @@ function setupLibraryManager() {
   const sort = document.getElementById("librarySort");
   if (search) search.addEventListener("input", renderLibrary);
   if (sort) sort.addEventListener("change", renderLibrary);
+  const viewToggle = document.getElementById("listViewButton");
+  if (viewToggle) {
+    const savedView = localStorage.getItem("studyink-library-view");
+    const gridMode = savedView === "grid";
+    documentGrid?.classList.toggle("grid-mode", gridMode);
+    viewToggle.classList.toggle("active", !gridMode);
+    viewToggle.textContent = gridMode ? "☷" : "▦";
+    viewToggle.title = gridMode ? "Listenansicht" : "Rasteransicht";
+    viewToggle.setAttribute("aria-label", viewToggle.title);
+    viewToggle.setAttribute("aria-pressed", String(gridMode));
+    viewToggle.addEventListener("click", () => {
+      const nextGrid = !documentGrid.classList.contains("grid-mode");
+      documentGrid.classList.toggle("grid-mode", nextGrid);
+      localStorage.setItem("studyink-library-view", nextGrid ? "grid" : "list");
+      viewToggle.classList.toggle("active", !nextGrid);
+      viewToggle.textContent = nextGrid ? "☷" : "▦";
+      viewToggle.title = nextGrid ? "Listenansicht" : "Rasteransicht";
+      viewToggle.setAttribute("aria-label", viewToggle.title);
+      viewToggle.setAttribute("aria-pressed", String(nextGrid));
+    });
+  }
+  document.addEventListener("keydown", event => {
+    if (event.key === "/" && !/input|textarea|select/i.test(document.activeElement?.tagName || "")) {
+      event.preventDefault();
+      search?.focus();
+    }
+    if (event.key === "Escape") {
+      const menu = document.getElementById("newMenu");
+      const trigger = document.getElementById("newNotebook");
+      if (menu && !menu.classList.contains("hidden")) {
+        menu.classList.add("hidden");
+        trigger?.setAttribute("aria-expanded", "false");
+        trigger?.focus();
+      }
+    }
+  });
   const newButton = document.getElementById("newNotebook");
   const newMenu = document.getElementById("newMenu");
   if (newButton && newMenu) {

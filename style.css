@@ -282,3 +282,85 @@ button:disabled{opacity:.45;cursor:not-allowed}
 :root[data-studyink-theme="soft-dark"] .history button{background:var(--si-surface);color:var(--si-text);border-color:var(--si-border)}
 :root[data-studyink-theme="soft-dark"] .search-result{border-color:var(--si-border)}
 :root[data-studyink-theme="soft-dark"] .search-result:hover{background:var(--si-surface-soft)}
+
+
+/* =========================================================
+   STUDYINK NOTEBOOK WORKSPACE REDESIGN
+   Reference-inspired tablet layout: compact tools, floating search,
+   generous paper and contextual quick actions.
+========================================================= */
+.notebook-view{background:#f5f7fa}
+.topbar{height:48px;min-height:48px;padding:0 12px;background:#fff;border-bottom:1px solid #e5eaf0;box-shadow:0 2px 8px rgba(31,45,65,.045)}
+:root{--topbar-height:48px}
+.top-left{min-width:210px}
+.top-tools{gap:1px;min-width:0;overflow-x:auto;scrollbar-width:none}
+.top-tools::-webkit-scrollbar{display:none}
+.top-tools .top-button{width:31px;height:32px;font-size:15px;border-radius:8px}
+.top-tools i{height:19px;margin:0 4px;background:#e8edf3}
+.top-button.home{width:30px;height:30px;color:#377fdc;background:#edf5ff}
+.book-name{padding:6px 8px}
+#bookTitle{font-size:12px}
+.workspace{background:#f5f7fa}
+.paper-stage{padding:54px 34px 74px}
+.paper{box-shadow:0 4px 22px rgba(31,45,65,.10),0 0 0 1px rgba(30,50,75,.05)}
+.history{top:57px;left:14px}
+.history button{width:30px;height:30px;border-radius:50%;border-color:transparent;background:rgba(255,255,255,.88);box-shadow:0 2px 9px rgba(31,45,65,.08)}
+.pen-palette{top:56px;bottom:auto;min-height:42px;padding:4px 7px;border-radius:999px;box-shadow:0 4px 18px rgba(31,45,65,.10)}
+.pen-palette button{width:30px;height:30px;border-radius:50%}
+.pen-palette .divider{height:20px}
+.save-status{top:57px;right:14px}
+.page-sidebar{top:48px;bottom:0}
+.page-indicator{bottom:14px;left:14px}
+
+/* Search behaves like a lightweight floating inspector, not a blocking dialog. */
+#searchOverlay{z-index:180;inset:48px auto 0 0;width:min(340px,calc(100vw - 24px));padding:22px 0 0 14px;align-items:flex-start;justify-content:flex-start;background:transparent;pointer-events:none}
+#searchOverlay .search-dialog{width:100%;max-height:calc(100% - 38px);overflow:auto;padding:20px 16px 16px;border-radius:13px;background:rgba(255,255,255,.97);box-shadow:0 12px 36px rgba(29,43,62,.16);pointer-events:auto}
+#searchOverlay .search-dialog h2{font-size:15px;margin:0 0 12px}
+#searchOverlay .search-dialog input{min-height:38px;background:#f7f9fc}
+#searchOverlay .search-result{padding:12px 8px;border-radius:8px}
+#searchOverlay .search-result-title{font-size:12px;line-height:1.45}
+#searchOverlay .search-result-page{font-size:11px}
+
+/* Floating study actions inspired by the reference image. */
+.study-assistant{position:absolute;z-index:90;right:22px;bottom:18px;display:flex;align-items:flex-end;gap:10px;pointer-events:none}
+.assistant-orb{width:46px;height:46px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;color:#1768ba;background:linear-gradient(145deg,#dff8ff,#8eddf4);box-shadow:0 5px 18px rgba(31,137,190,.22);font-size:23px}
+.assistant-actions{display:flex;gap:8px;padding:7px;background:rgba(255,255,255,.94);border:1px solid #e4eaf1;border-radius:14px;box-shadow:0 5px 22px rgba(31,45,65,.10);pointer-events:auto}
+.assistant-actions button{min-height:34px;padding:0 12px;border:1px solid #dceaf8;border-radius:999px;color:#286b9d;background:#eef7ff;font-size:12px;font-weight:650;white-space:nowrap;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.assistant-actions button:hover{background:#dff0ff;transform:translateY(-1px)}
+.assistant-result{position:absolute;right:0;bottom:58px;width:min(340px,calc(100vw - 36px));padding:16px 18px 13px;border:1px solid #dfe8f1;border-radius:14px;color:#263447;background:rgba(255,255,255,.98);box-shadow:0 12px 35px rgba(31,45,65,.16);pointer-events:auto}
+.assistant-result[hidden]{display:none}
+.assistant-result strong{display:block;padding-right:24px;font-size:13px}
+.assistant-result p{margin:9px 0;color:#4d5c6e;font-size:12px;line-height:1.6;white-space:pre-wrap}
+.assistant-result small{display:block;color:#8995a4;font-size:10px;line-height:1.4}
+.assistant-close{position:absolute;top:8px;right:9px;width:26px;height:26px;border-radius:7px;color:#6f7b8b;background:transparent;font-size:19px;cursor:pointer}
+.assistant-close:hover{background:#f0f4f8}
+:root[data-studyink-theme="soft-dark"] .notebook-view,
+:root[data-studyink-theme="soft-dark"] .workspace{background:#111821}
+:root[data-studyink-theme="soft-dark"] #searchOverlay .search-dialog,
+:root[data-studyink-theme="soft-dark"] .assistant-actions,
+:root[data-studyink-theme="soft-dark"] .assistant-result{background:#1b2531;color:#e8eef6;border-color:#354354}
+:root[data-studyink-theme="soft-dark"] #searchOverlay .search-dialog input{background:#202c39;color:#e8eef6;border-color:#354354}
+:root[data-studyink-theme="soft-dark"] .assistant-result p{color:#c0ccda}
+:root[data-studyink-theme="soft-dark"] .assistant-result small{color:#9aa9ba}
+:root[data-studyink-theme="soft-dark"] .assistant-actions button{background:#263d5b;color:#b8d7ff;border-color:#354f70}
+@media(max-width:800px){
+  .topbar{height:46px;min-height:46px}
+  :root{--topbar-height:46px}
+  .top-left{min-width:0;flex:0 0 auto}
+  .top-tools{flex:1;justify-content:flex-end}
+  .top-tools .top-button{width:29px;height:30px}
+  .top-tools i{margin:0 2px}
+  .pen-palette{top:54px;left:50%;bottom:auto;max-width:calc(100vw - 20px);overflow-x:auto}
+  .study-assistant{right:10px;bottom:10px;gap:7px}
+  .assistant-orb{width:40px;height:40px}
+  .assistant-actions{gap:5px;padding:5px}
+  .assistant-actions button{min-height:32px;padding:0 9px;font-size:11px}
+  #searchOverlay{top:46px;width:min(320px,calc(100vw - 20px));padding:12px 0 0 10px}
+}
+@media(max-width:480px){
+  .top-tools .top-button:nth-of-type(n+11){display:none}
+  .book-name{max-width:126px}
+  #bookTitle{max-width:92px}
+  .assistant-orb{display:none}
+  .assistant-actions{max-width:calc(100vw - 20px)}
+}

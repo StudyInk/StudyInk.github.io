@@ -224,11 +224,13 @@
         const fit=Math.min(900/pageCanvas.width,1165/pageCanvas.height),w=pageCanvas.width*fit,h=pageCanvas.height*fit;
         ctx.drawImage(pageCanvas,(900-w)/2,(1165-h)/2,w,h);
         imported.push({id:"page_"+Date.now()+"_"+number,number,createdAt:new Date().toISOString(),
-          strokes:[],texts:[],backgroundDataUrl:image.toDataURL("image/jpeg",0.86)});
+          strokes:[],texts:[],backgroundDataUrl:image.toDataURL("image/jpeg",0.68)});
         pageCanvas.width=0;
       }
       const book={id:"book_"+Date.now(),name:file.name.replace(/\.pdf$/i,"")||"PDF-Import",
         createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),currentPage:0,pages:imported};
+      const projectedSize = JSON.stringify(notebooks).length + JSON.stringify(book).length;
+      if (projectedSize > 2100000) throw new Error("PDF zu groß für den verfügbaren Browserspeicher. Bitte weniger Seiten importieren.");
       notebooks.unshift(book);activeNotebook=book;activePageIndex=0;
       saveNotebooks();showNotebook();renderAll();toast("PDF mit "+imported.length+" Seiten importiert");
     } catch(error){console.error("StudyInk PDF import:",error);toast(error.message||"PDF-Import fehlgeschlagen");}

@@ -33,6 +33,8 @@
       <div class="system-panel-title">StudyInk</div>
       <button data-system="duplicate">⧉ <span>Seite duplizieren</span></button>
       <button data-system="delete">⌫ <span>Seite löschen</span></button>
+      <button data-system="pdf-import">▤ <span>PDF importieren</span></button>
+      <button data-system="pdf-export">▧ <span>Als PDF exportieren</span></button>
       <button data-system="export">⇩ <span>Notizbuch sichern</span></button>
       <button data-system="import">⇧ <span>Backup wiederherstellen</span></button>
       <button data-system="theme">◐ <span>Arbeitsbereich wechseln</span></button>
@@ -52,9 +54,13 @@
     input.id = "systemImportInput";
     input.hidden = true;
     workspace.appendChild(input);
-
+    const pdfInput = document.createElement("input");
+    pdfInput.type = "file"; pdfInput.accept = "application/pdf,.pdf";
+    pdfInput.id = "studyInkPdfInput"; pdfInput.hidden = true;
+    workspace.appendChild(pdfInput);
     panel.addEventListener("click", handlePanelClick);
     input.addEventListener("change", importBackup);
+    pdfInput.addEventListener("change", importPdf);
 
     const more = [...document.querySelectorAll(".top-button")].find(
       b => b.title === "Mehr"
@@ -78,6 +84,8 @@
     const action = button.dataset.system;
     if (action === "duplicate") duplicatePage();
     if (action === "delete") deletePage();
+    if (action === "pdf-import") { $("studyInkPdfInput").click(); return; }
+    if (action === "pdf-export") { exportPdf(); $("systemPanel").classList.add("hidden"); return; }
     if (action === "export") exportBackup();
     if (action === "import") $("systemImportInput").click();
     if (action === "theme") toggleTheme();
@@ -178,6 +186,95 @@
     reader.readAsText(file);
   }
 
+
+  let pdfLibraryPromise = null;
+  function loadPdfLibrary() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfLibraryPromise) return pdfLibraryPromise;
+    pdfLibraryPromise = new Promise((resolve,reject) => {
+      const script=document.createElement("script");
+      script.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      script.onload=()=>{if(!window.pdfjsLib)return reject(new Error("PDF.js konnte nicht geladen werden"));
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);};
+      script.onerror=()=>reject(new Error("PDF.js konnte nicht geladen werden"));
+      document.head.appendChild(script);
+    });
+    return pdfLibraryPromise;
+  }
+  async function importPdf(event) {
+    const file=event.target.files&&event.target.files[0]; if(!file)return;
+    if(file.size>40*1024*1024){toast("PDF ist zu groß (maximal 40 MB)");event.target.value="";return;}
+    try {
+      toast("PDF wird importiert …");
+      const pdfjs=await loadPdfLibrary(), bytes=new Uint8Array(await file.arrayBuffer());
+      const pdf=await pdfjs.getDocument({data:bytes}).promise;
+      if(pdf.numPages>100)throw new Error("Maximal 100 PDF-Seiten pro Import");
+      const imported=[];
+      for(let number=1;number<=pdf.numPages;number++){
+        const source=await pdf.getPage(number), base=source.getViewport({scale:1});
+        const viewport=source.getViewport({scale:Math.min(2,1800/Math.max(base.width,base.height))});
+        const pageCanvas=document.createElement("canvas");
+        pageCanvas.width=Math.ceil(viewport.width);pageCanvas.height=Math.ceil(viewport.height);
+        await source.render({canvasContext:pageCanvas.getContext("2d"),viewport}).promise;
+        const image=document.createElement("canvas");image.width=900;image.height=1165;
+        const ctx=image.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,900,1165);
+        const fit=Math.min(900/pageCanvas.width,1165/pageCanvas.height),w=pageCanvas.width*fit,h=pageCanvas.height*fit;
+        ctx.drawImage(pageCanvas,(900-w)/2,(1165-h)/2,w,h);
+        imported.push({id:"page_"+Date.now()+"_"+number,number,createdAt:new Date().toISOString(),
+          strokes:[],texts:[],backgroundDataUrl:image.toDataURL("image/jpeg",0.86)});
+        pageCanvas.width=0;
+      }
+      const book={id:"book_"+Date.now(),name:file.name.replace(/\.pdf$/i,"")||"PDF-Import",
+        createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),currentPage:0,pages:imported};
+      notebooks.unshift(book);activeNotebook=book;activePageIndex=0;
+      saveNotebooks();showNotebook();renderAll();toast("PDF mit "+imported.length+" Seiten importiert");
+    } catch(error){console.error("StudyInk PDF import:",error);toast(error.message||"PDF-Import fehlgeschlagen");}
+    finally{event.target.value="";}
+  }
+  function exportPdf() {
+    if(typeof activeNotebook==="undefined"||!activeNotebook)return;
+    if(typeof finishTextEditing==="function")finishTextEditing();
+    const win=window.open("","_blank");
+    if(!win){toast("Bitte Pop-ups für den PDF-Export erlauben");return;}
+    const pages=activeNotebook.pages||[];
+    const jobs=pages.map((page,index)=>new Promise(resolve=>{
+      const c=document.createElement("canvas");c.width=900;c.height=1165;
+      const ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,900,1165);
+      const finish=()=>{
+        (page.strokes||[]).forEach(stroke=>{
+          if(!stroke.points||!stroke.points.length||stroke.tool==="eraser")return;
+          ctx.save();ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle=stroke.color||"#111";
+          ctx.fillStyle=stroke.color||"#111";ctx.globalAlpha=stroke.opacity==null?1:stroke.opacity;
+          ctx.lineWidth=(stroke.size||2)*(stroke.tool==="highlighter"?4:1);
+          if(stroke.points.length===1){const p=stroke.points[0];ctx.beginPath();ctx.arc(p.x,p.y,ctx.lineWidth/2,0,Math.PI*2);ctx.fill();}
+          else{ctx.beginPath();ctx.moveTo(stroke.points[0].x,stroke.points[0].y);stroke.points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.stroke();}
+          ctx.restore();
+        });
+        (page.texts||[]).forEach(note=>{ctx.fillStyle=note.color||"#111";ctx.font=(note.size||22)+"px Arial";ctx.fillText(note.text||"",note.x||0,(note.y||0)+(note.size||22));});
+        resolve('<section><img src="'+c.toDataURL("image/png")+'"><small>'+(index+1)+'</small></section>');
+      };
+      if(page.backgroundDataUrl){const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,900,1165);finish();};img.onerror=finish;img.src=page.backgroundDataUrl;}
+      else finish();
+    }));
+    Promise.all(jobs).then(html=>{
+      const title=String(activeNotebook.name||"StudyInk").replace(/[&<>"']/g,"");
+      win.document.open();
+      win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title><style>'+
+        '@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#fff}section{position:relative;width:210mm;height:297mm;page-break-after:always;overflow:hidden}'+
+        'section:last-child{page-break-after:auto}section img{width:100%;height:100%;object-fit:contain}small{position:absolute;right:8mm;bottom:5mm;color:#777;font:9pt Arial}'+
+        '@media screen{body{background:#e9edf3}section{margin:12px auto;box-shadow:0 2px 12px #999}}</style></head><body>'+
+        html.join("")+'<script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>');
+      win.document.close();toast("Druckdialog öffnen und „Als PDF speichern“ wählen");
+    }).catch(error=>{win.close();console.error(error);toast("PDF-Export fehlgeschlagen");});
+  }
+  function runAutomaticBackup() {
+    try {
+      if(typeof notebooks==="undefined"||!Array.isArray(notebooks)||!notebooks.length)return;
+      localStorage.setItem("studyink_autobackup_v1",JSON.stringify({savedAt:new Date().toISOString(),notebooks:notebooks}));
+    } catch(error){console.warn("StudyInk automatic backup:",error);toast("Automatisches Backup nicht möglich – Speicherplatz prüfen");}
+  }
+
   function setZoom(value) {
     zoomValue = Math.max(50, Math.min(150, value));
     prefs.zoom = zoomValue;
@@ -220,6 +317,9 @@
     document.documentElement.dataset.studyinkTheme = prefs.theme === "soft-dark" ? "soft-dark" : "light";
     setZoom(zoomValue);
     document.addEventListener("keydown", keyboardEnhancements);
+    runAutomaticBackup();
+    window.setInterval(runAutomaticBackup, 60000);
+    window.addEventListener("beforeunload", runAutomaticBackup);
   }
 
   if (document.readyState === "loading") {

@@ -5,6 +5,11 @@
   const defaults = { theme: "dark", accent: "#35a9e8", density: "comfortable", scale: 1, radius: "soft" };
   let settings = { ...defaults };
   try { settings = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch (_) {}
+  if (!/^#[0-9a-f]{6}$/i.test(settings.accent)) settings.accent = defaults.accent;
+  if (!["dark","light"].includes(settings.theme)) settings.theme = defaults.theme;
+  if (!["compact","comfortable","spacious"].includes(settings.density)) settings.density = defaults.density;
+  if (!["sharp","soft","round"].includes(settings.radius)) settings.radius = defaults.radius;
+  settings.scale = Math.max(.85, Math.min(1.15, Number(settings.scale) || 1));
   const root = document.documentElement;
   const style = document.createElement("style");
   style.id = "studyink-customization-styles";
@@ -103,6 +108,8 @@
     open();
   }, true);
   apply();
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", apply, { once: true });
-  else apply();
+  // enhancements.js initializes its legacy theme on the next task; re-apply
+  // the dedicated customization profile afterwards so the saved choice wins.
+  window.setTimeout(apply, 0);
+  window.addEventListener("pageshow", apply);
 })();

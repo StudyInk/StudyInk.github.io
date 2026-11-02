@@ -1,0 +1,81 @@
+/* Responsive hardening layer — keeps existing editor interactions intact. */
+html,body,#app{min-width:0;min-height:0}
+.library-view,.library-main,.library-content,.workspace,.paper-stage{min-width:0}
+.library-main{min-height:0;overscroll-behavior:contain}
+.library-topbar{position:sticky;top:0;z-index:70}
+.library-top-actions{min-width:0;max-width:100%}
+.main-search{min-width:0}
+.main-search input{min-width:0;max-width:clamp(90px,18vw,220px)}
+.library-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.library-toolbar-actions{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.library-toolbar-actions select{max-width:100%;min-width:0}
+.document-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,245px),1fr));min-width:0}
+.document-card{min-width:0}
+.document-title,.document-meta{overflow-wrap:anywhere}
+.topbar{min-width:0}
+.top-left{flex:0 1 auto;min-width:0}
+.top-tools{flex:1 1 auto;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+.paper-stage{touch-action:pan-x pan-y}
+.paper{max-width:none}
+@media(max-width:760px){
+  body{overflow:hidden}
+  .library-view{display:flex;flex-direction:column;height:100dvh}
+  .library-sidebar{width:100%;min-width:0;flex:0 0 auto}
+  .library-main{width:100%;flex:1 1 auto;overflow:auto;padding:0}
+  .library-content{width:100%;padding-inline:clamp(12px,3.5vw,22px)}
+  .library-top-actions{width:100%;justify-content:flex-end}
+  .library-header{align-items:flex-start}
+  .library-toolbar{align-items:stretch}
+  .library-filter-label{display:none}
+  .library-toolbar-actions{width:100%;justify-content:space-between}
+  .library-toolbar-actions select{flex:1 1 120px}
+  .new-menu-wrap{flex:0 0 auto}
+  .document-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))}
+  .notebook-view{height:100dvh}
+  .topbar{height:auto;min-height:var(--topbar-height);padding:5px 7px;align-items:center}
+  .top-left{max-width:42%}
+  .top-tools{gap:2px}
+  .top-tools .top-button{flex:0 0 34px}
+  .paper-stage{inset:var(--topbar-height) 0 0;padding:54px 10px 92px;align-items:flex-start;justify-content:center}
+  .paper{width:min(900px,calc(100vw - 20px));height:auto;aspect-ratio:900/1165}
+  .pen-palette{bottom:max(8px,env(safe-area-inset-bottom));max-width:calc(100vw - 12px);overflow-x:auto;overscroll-behavior-x:contain}
+  .page-indicator{bottom:max(12px,env(safe-area-inset-bottom));left:8px}
+}
+@media(max-width:480px){
+  .library-topbar{height:52px;padding-inline:9px}
+  .main-search input{width:min(28vw,125px)}
+  .library-content{padding-top:16px;padding-bottom:28px}
+  .library-header h1{font-size:clamp(24px,7vw,30px)}
+  .library-overview{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .overview-card{min-width:0}
+  .resume-panel{align-items:flex-start}
+  .resume-art{display:none}
+  .resume-actions{padding-left:0}
+  .document-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .document-grid.grid-mode .document-card{min-width:0}
+  .document-preview{max-width:100%}
+  .book-name{padding-inline:5px}
+  .top-tools .top-button{flex-basis:32px;width:32px;height:32px}
+  .history{top:calc(var(--topbar-height) + 8px);left:8px}
+  .save-status{top:calc(var(--topbar-height) + 8px);right:8px}
+  .pen-palette{gap:1px;padding:5px}
+  .pen-palette button{flex:0 0 30px;width:30px;height:32px}
+}
+@media(max-width:350px){
+  .document-grid{grid-template-columns:minmax(0,1fr)}
+  .library-overview{gap:5px}
+  .overview-card{padding:8px 6px}
+  .library-toolbar-actions select{max-width:115px}
+}
+@media(orientation:landscape) and (max-height:520px){
+  .library-sidebar{padding-block:6px}
+  .library-content{padding-top:14px}
+  .library-overview{margin-bottom:12px}
+  .overview-card{min-height:70px}
+  .resume-panel{min-height:90px;padding:10px 14px;margin-bottom:12px}
+  .paper-stage{padding-top:40px;padding-bottom:62px}
+  .pen-palette{bottom:5px}
+}
+@media(prefers-reduced-motion:reduce){
+  .library-view *,.notebook-view *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}

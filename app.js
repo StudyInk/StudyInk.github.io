@@ -162,6 +162,8 @@ function init() {
 
   setupEvents();
 
+  setupLibraryManager();
+
   if (notebooks.length === 0) {
     createNotebook("Unbenanntes Notizbuch", true);
   }
@@ -624,89 +626,118 @@ function showLibrary() {
    LIBRARY
 ========================================================= */
 
+let libraryViewMode = "documents";
+
+function setupLibraryManager() {
+  document.querySelectorAll("[data-library-view]").forEach(button => {
+    button.addEventListener("click", () => {
+      libraryViewMode = button.dataset.libraryView;
+      document.querySelectorAll("[data-library-view]").forEach(item => item.classList.toggle("active", item === button));
+      const heading = document.getElementById("libraryHeading");
+      if (heading) heading.textContent = ({documents:"Meine Notizen",favorites:"Favoriten",shared:"Geteilt",trash:"Papierkorb"})[libraryViewMode];
+      renderLibrary();
+    });
+  });
+  const search = document.getElementById("librarySearch");
+  const sort = document.getElementById("librarySort");
+  if (search) search.addEventListener("input", renderLibrary);
+  if (sort) sort.addEventListener("change", renderLibrary);
+}
+
 function renderLibrary() {
-
+  if (!documentGrid) return;
   documentGrid.innerHTML = "";
+  const query = (document.getElementById("librarySearch")?.value || "").trim().toLocaleLowerCase("de");
+  const sortMode = document.getElementById("librarySort")?.value || "updated";
+  let visible = notebooks.filter(book => {
+    const inTrash = !!book.deletedAt;
+    if (libraryViewMode === "trash" && !inTrash) return false;
+    if (libraryViewMode !== "trash" && inTrash) return false;
+    if (libraryViewMode === "favorites" && !book.favorite) return false;
+    if (libraryViewMode === "shared") return false;
+    return !query || String(book.name || "").toLocaleLowerCase("de").includes(query);
+  });
+  visible.sort((a,b) => {
+    if (sortMode === "name") return String(a.name || "").localeCompare(String(b.name || ""), "de");
+    if (sortMode === "pages") return (b.pages?.length || 0) - (a.pages?.length || 0);
+    const key = sortMode === "created" ? "createdAt" : "updatedAt";
+    return String(b[key] || "").localeCompare(String(a[key] || ""));
+  });
 
-  if (notebooks.length === 0) {
-
-    const empty =
-      document.createElement("div");
-
-    empty.textContent =
-      "Noch keine Notizbücher.";
-
+  if (libraryViewMode === "shared") {
+    const note = document.createElement("p");
+    note.className = "library-empty";
+    note.textContent = "Teilen ist noch nicht mit einem Cloud-Dienst verbunden. Deine Notizen bleiben lokal auf diesem Gerät.";
+    documentGrid.appendChild(note);
+    return;
+  }
+  if (!visible.length) {
+    const empty = document.createElement("div");
+    empty.className = "library-empty";
+    empty.textContent = libraryViewMode === "trash" ? "Der Papierkorb ist leer." :
+      libraryViewMode === "favorites" ? "Noch keine Favoriten. Markiere ein Notizbuch mit ☆." :
+      query ? "Keine passenden Notizbücher gefunden." : "Noch keine Notizbücher.";
     documentGrid.appendChild(empty);
-
     return;
   }
 
-
-  notebooks.forEach(
-    notebook => {
-
-      const card =
-        document.createElement("article");
-
-      card.className =
-        "document-card";
-
-
-      const preview =
-        document.createElement("div");
-
-      preview.className =
-        "document-preview";
-
-
-      const title =
-        document.createElement("div");
-
-      title.className =
-        "document-title";
-
-      title.textContent =
-        notebook.name;
-
-
-      const meta =
-        document.createElement("div");
-
-      meta.className =
-        "document-meta";
-
-      meta.textContent =
-        `${notebook.pages.length} Seiten`;
-
-
-      card.appendChild(preview);
-      card.appendChild(title);
-      card.appendChild(meta);
-
-
-      card.addEventListener(
-        "click",
-        () => {
-
-          activeNotebook =
-            notebook;
-
-          activePageIndex =
-            notebook.currentPage || 0;
-
-          showNotebook();
-
-          renderAll();
-
-          saveNotebooks();
-        }
-      );
-
-
-      documentGrid.appendChild(card);
-
+  visible.forEach(notebook => {
+    const card = document.createElement("article");
+    card.className = "document-card";
+    const preview = document.createElement("div");
+    preview.className = "document-preview";
+    const title = document.createElement("div");
+    title.className = "document-title";
+    title.textContent = notebook.name || "Unbenanntes Notizbuch";
+    const meta = document.createElement("div");
+    meta.className = "document-meta";
+    meta.textContent = `${notebook.pages?.length || 0} Seiten · ${notebook.updatedAt ? new Date(notebook.updatedAt).toLocaleDateString("de-DE") : "Noch nicht bearbeitet"}`;
+    const actions = document.createElement("div");
+    actions.className = "document-actions";
+    const actionButton = (label, titleText, handler) => {
+      const button = document.createElement("button");
+      button.type = "button"; button.textContent = label; button.title = titleText;
+      button.addEventListener("click", event => { event.stopPropagation(); handler(); });
+      actions.appendChild(button);
+    };
+    if (libraryViewMode === "trash") {
+      actionButton("↶", "Wiederherstellen", () => {
+        delete notebook.deletedAt; saveNotebooks(); renderLibrary(); showToast("Notizbuch wiederhergestellt");
+      });
+      actionButton("×", "Endgültig löschen", () => {
+        if (!confirm("Dieses Notizbuch endgültig löschen? Das kann nicht rückgängig gemacht werden.")) return;
+        notebooks = notebooks.filter(item => item.id !== notebook.id);
+        if (activeNotebook?.id === notebook.id) activeNotebook = notebooks.find(item => !item.deletedAt) || null;
+        saveNotebooks(); renderLibrary(); showToast("Notizbuch endgültig gelöscht");
+      });
+    } else {
+      actionButton(notebook.favorite ? "★" : "☆", notebook.favorite ? "Favorit entfernen" : "Als Favorit markieren", () => {
+        notebook.favorite = !notebook.favorite; saveNotebooks(); renderLibrary();
+      });
+      actionButton("⧉", "Notizbuch duplizieren", () => {
+        const copy = JSON.parse(JSON.stringify(notebook));
+        copy.id = "book_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+        copy.name = (notebook.name || "Notizbuch") + " (Kopie)";
+        copy.createdAt = copy.updatedAt = new Date().toISOString();
+        copy.favorite = false; delete copy.deletedAt;
+        copy.pages.forEach((page,index) => { page.id = "page_" + Date.now() + "_" + index + "_" + Math.random().toString(36).slice(2); });
+        notebooks.unshift(copy); saveNotebooks(); renderLibrary(); showToast("Notizbuch dupliziert");
+      });
+      actionButton("⌫", "In Papierkorb verschieben", () => {
+        if (!confirm("Notizbuch in den Papierkorb verschieben?")) return;
+        notebook.deletedAt = new Date().toISOString();
+        saveNotebooks(); renderLibrary(); showToast("In den Papierkorb verschoben");
+      });
     }
-  );
+    card.append(preview, title, meta, actions);
+    card.addEventListener("click", () => {
+      if (libraryViewMode === "trash") return;
+      activeNotebook = notebook;
+      activePageIndex = Math.max(0, Math.min(notebook.currentPage || 0, notebook.pages.length - 1));
+      showNotebook(); renderAll(); saveNotebooks();
+    });
+    documentGrid.appendChild(card);
+  });
 }
 
 

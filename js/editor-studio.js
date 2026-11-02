@@ -3,7 +3,7 @@
   "use strict";
   const PREF_KEY = "studyink_editor_studio_v1";
   const TEMPLATE_KEY = "studyink_page_templates_v1";
-  const basePrefs = { mobileDock: true, pressureHint: true, snapPanels: true, toolbarLabels: true, pageNumbers: true };
+  const basePrefs = { mobileDock: true, pressureHint: true, snapPanels: true, toolbarLabels: true, pageNumbers: true, defaultTool: "pen", defaultSize: 3 };
   let prefs = { ...basePrefs };
   let templates = [
     { id:"blank", name:"Blank", kind:"blank" },
@@ -87,8 +87,8 @@
     render();body.append(list);
     const name=document.createElement("input");name.type="text";name.maxLength=32;name.placeholder="Name für eigene Vorlage";
     const create=document.createElement("button");create.type="button";create.textContent="＋ Eigene Vorlage speichern";
-    const customRow=document.createElement("div");customRow.className="si-editor-row";customRow.append(name,create);body.append(customRow);
-    create.addEventListener("click",()=>{const n=name.value.trim();if(!n){name.focus();return;}const id="custom-"+Date.now();templates.push({id,name:n,kind:"grid"});chosen=id;save();render();name.value="";toast("Eigene Vorlage gespeichert");});
+    const kind=document.createElement("select");kind.setAttribute("aria-label","Vorlagenlayout");[["grid","Grid"],["ruled","Ruled"],["dots","Dot grid"],["cornell","Cornell"],["planner","Planner"],["blank","Blank"]].forEach(([value,label])=>{const o=document.createElement("option");o.value=value;o.textContent=label;kind.append(o);});const customRow=document.createElement("div");customRow.className="si-editor-row";customRow.append(name,kind,create);body.append(customRow);
+    create.addEventListener("click",()=>{const n=name.value.trim();if(!n){name.focus();return;}const id="custom-"+Date.now();templates.push({id,name:n,kind:kind.value});chosen=id;save();render();name.value="";toast("Eigene Vorlage gespeichert");});
     const cancel=document.createElement("button");cancel.textContent="Schließen";cancel.type="button";
     const apply=document.createElement("button");apply.textContent="Auf aktuelle Seite anwenden";apply.className="primary-action";apply.type="button";
     const d=dialog("Seitenvorlagen",body,cancel);d.backdrop.querySelector("footer").append(apply);
@@ -124,7 +124,7 @@
     if(!el||el.querySelector(":scope > .si-drag-handle"))return;
     if(getComputedStyle(el).position==="static")el.style.position="relative";
     const handle=document.createElement("button");handle.type="button";handle.className="si-drag-handle";handle.textContent="⠿";handle.title="Panel verschieben";handle.setAttribute("aria-label","Panel verschieben");el.append(handle);
-    const saved=positions[key];if(saved){el.style.left=saved.x+"px";el.style.top=saved.y+"px";el.style.right="auto";el.style.bottom="auto";}
+    const saved=positions[key];if(saved){el.style.position="fixed";el.style.left=Math.max(0,Math.min(innerWidth-el.offsetWidth,saved.x))+"px";el.style.top=Math.max(0,Math.min(innerHeight-el.offsetHeight,saved.y))+"px";el.style.right="auto";el.style.bottom="auto";}
     let drag=null;
     handle.addEventListener("pointerdown",e=>{e.preventDefault();const r=el.getBoundingClientRect();drag={x:e.clientX,y:e.clientY,left:r.left,top:r.top};handle.setPointerCapture(e.pointerId);el.classList.add("si-dragging");});
     handle.addEventListener("pointermove",e=>{if(!drag)return;el.style.position="fixed";el.style.left=Math.max(0,Math.min(innerWidth-el.offsetWidth,drag.left+e.clientX-drag.x))+"px";el.style.top=Math.max(0,Math.min(innerHeight-el.offsetHeight,drag.top+e.clientY-drag.y))+"px";el.style.right="auto";el.style.bottom="auto";});
@@ -136,7 +136,7 @@
     if(tools&&!$("siAdvancedButton")){const b=document.createElement("button");b.id="siAdvancedButton";b.className="top-button";b.type="button";b.title="Advanced settings";b.textContent="⚙";b.addEventListener("click",openSettings);tools.append(b);}
   }
   function initialize(){
-    addEditorButtons();mobileDock();applyPrefs();syncTemplate();
+    addEditorButtons();mobileDock();applyPrefs();syncTemplate();if(prefs.defaultTool&&typeof setTool==="function")setTool(prefs.defaultTool);if(typeof currentSize!=="undefined"&&prefs.defaultSize){currentSize=prefs.defaultSize;if(typeof updateSizeDisplay==="function")updateSizeDisplay();}
     addPanelHandle($("penPalette"),"penPalette");addPanelHandle(document.querySelector(".history"),"history");addPanelHandle($("pageSidebar"),"pageSidebar");addPanelHandle($("pageIndicator"),"pageIndicator");addPanelHandle($("studyAssistant"),"studyAssistant");
     const root=$("notebookView");if(root){const observer=new MutationObserver(()=>{if(!$("penPalette")?.querySelector(".si-drag-handle"))addPanelHandle($("penPalette"),"penPalette");if(!document.querySelector(".history .si-drag-handle"))addPanelHandle(document.querySelector(".history"),"history");syncTemplate();});observer.observe(root,{childList:true,subtree:true});}
     const originalRender=window.renderAll;if(typeof originalRender==="function"&&!originalRender.__studioWrapped){const wrapped=function(){originalRender.apply(this,arguments);syncTemplate();};wrapped.__studioWrapped=true;window.renderAll=wrapped;}

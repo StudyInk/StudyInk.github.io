@@ -55,7 +55,7 @@
       .si-mobile-dock button{display:grid;place-items:center;gap:2px;min-width:0;min-height:43px;flex:1;padding:4px 2px;border-radius:9px;background:transparent;color:#e5eef3;font-size:18px}
       .si-mobile-dock button span{font-size:9px;white-space:nowrap}
       .si-mobile-dock button:active,.si-mobile-dock button.active{background:#254353;color:#8bd5ff}
-      .paper-stage{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
+      .paper-stage{padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}.page-indicator{bottom:calc(68px + env(safe-area-inset-bottom))!important;left:8px}
       .si-drag-handle{width:30px;height:28px;opacity:.85}
       .si-template-list{grid-template-columns:1fr}
     }

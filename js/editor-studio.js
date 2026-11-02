@@ -25,7 +25,7 @@
     .paper[data-template="dots"] .grid{background-image:radial-gradient(rgba(75,125,175,.42) 1px,transparent 1.2px)!important;background-size:20px 20px!important}
     .paper[data-template="cornell"] .grid{background-image:linear-gradient(90deg,transparent 0,transparent 27%,rgba(210,80,80,.35) 27.2%,transparent 27.5%),repeating-linear-gradient(to bottom,transparent 0,transparent 31px,rgba(80,130,180,.2) 32px,transparent 33px)!important;background-size:100% 33px!important}
     .paper[data-template="planner"] .grid{background-image:linear-gradient(90deg,rgba(80,130,180,.2) 1px,transparent 1px),linear-gradient(rgba(80,130,180,.2) 1px,transparent 1px)!important;background-size:33.333% 25%!important;border:1px solid rgba(80,130,180,.25)}
-    .si-mobile-dock{display:none}
+    .si-mobile-dock{display:none}.si-mobile-dock[hidden]{display:none!important}
     .si-editor-dialog-backdrop{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:14px;background:rgba(3,9,14,.68);backdrop-filter:blur(8px)}
     .si-editor-dialog{width:min(590px,100%);max-height:min(88dvh,780px);overflow:auto;color:#eaf2f6;background:#142027;border:1px solid #354852;border-radius:18px;box-shadow:0 28px 90px #0008}
     .si-editor-dialog header{display:flex;justify-content:space-between;align-items:center;padding:19px 22px;border-bottom:1px solid #30414a}

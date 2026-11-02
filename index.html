@@ -11,16 +11,25 @@
     <section id="libraryView" class="library-view hidden">
       <aside class="library-sidebar">
         <div class="brand">StudyInk</div>
-        <button class="nav active">▣ <span>Dokumente</span></button>
-        <button class="nav">☆ <span>Favoriten</span></button>
-        <button class="nav">⇄ <span>Geteilt</span></button>
-        <button class="nav">⌫ <span>Papierkorb</span></button>
+        <button class="nav active" data-library-view="documents">▣ <span>Dokumente</span></button>
+        <button class="nav" data-library-view="favorites">☆ <span>Favoriten</span></button>
+        <button class="nav" data-library-view="shared">⇄ <span>Geteilt</span></button>
+        <button class="nav" data-library-view="trash">⌫ <span>Papierkorb</span></button>
       </aside>
       <main class="library-main">
         <header class="library-header">
-          <div><small>STUDYINK</small><h1>Meine Notizen</h1></div>
+          <div><small>STUDYINK</small><h1 id="libraryHeading">Meine Notizen</h1></div>
           <button id="newNotebook" class="primary">＋ Neues Notizbuch</button>
         </header>
+        <div class="library-controls">
+          <input id="librarySearch" type="search" placeholder="Notizbücher durchsuchen …" aria-label="Notizbücher durchsuchen">
+          <select id="librarySort" aria-label="Sortierung">
+            <option value="updated">Zuletzt bearbeitet</option>
+            <option value="created">Zuletzt erstellt</option>
+            <option value="name">Name A–Z</option>
+            <option value="pages">Meiste Seiten</option>
+          </select>
+        </div>
         <div id="documentGrid" class="document-grid"></div>
       </main>
     </section>

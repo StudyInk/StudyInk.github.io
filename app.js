@@ -803,6 +803,8 @@ function selectPage(index) {
   }
 
   finishTextEditing();
+  selectedStrokeIndexes = [];
+  selectedTextIds = [];
 
   activePageIndex = index;
 

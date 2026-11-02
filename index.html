@@ -8,29 +8,65 @@
 </head>
 <body>
   <div id="app">
-    <section id="libraryView" class="library-view hidden">
+    <section id="libraryView" class="library-view">
       <aside class="library-sidebar">
-        <div class="brand">StudyInk</div>
-        <button class="nav active" data-library-view="documents">▣ <span>Dokumente</span></button>
-        <button class="nav" data-library-view="favorites">☆ <span>Favoriten</span></button>
-        <button class="nav" data-library-view="shared">⇄ <span>Geteilt</span></button>
-        <button class="nav" data-library-view="trash">⌫ <span>Papierkorb</span></button>
+        <div class="sidebar-brand-row">
+          <div class="brand-mark">✎</div><div class="brand">StudyInk</div>
+          <button class="sidebar-collapse" type="button" aria-label="Seitenleiste einklappen">◧</button>
+        </div>
+        <nav class="library-nav" aria-label="Hauptnavigation">
+          <button class="nav active" data-library-view="documents"><span class="nav-icon">▰</span><span>Dokumente</span></button>
+          <button class="nav" data-library-view="favorites"><span class="nav-icon">☆</span><span>Favoriten</span></button>
+          <button class="nav" data-library-view="shared"><span class="nav-icon">♧</span><span>Geteilt</span></button>
+          <button class="nav" data-library-view="trash"><span class="nav-icon">▤</span><span>Papierkorb</span></button>
+        </nav>
+        <div class="sidebar-footer"><span class="sidebar-avatar">S</span><div><strong>Mein Arbeitsbereich</strong><small>Lokaler Speicher</small></div></div>
       </aside>
       <main class="library-main">
-        <header class="library-header">
-          <div><small>STUDYINK</small><h1 id="libraryHeading">Meine Notizen</h1></div>
-          <button id="newNotebook" class="primary">＋ Neues Notizbuch</button>
+        <header class="library-topbar">
+          <div class="library-top-spacer"></div>
+          <div class="library-top-actions">
+            <label class="main-search"><span>⌕</span><input id="librarySearch" type="search" placeholder="Suchen" aria-label="Dokumente durchsuchen"></label>
+            <button class="round-top-action" id="libraryNotice" type="button" title="Hinweise">♧<i></i></button>
+            <button class="round-top-action" id="librarySettings" type="button" title="Ansichtseinstellungen">⚙</button>
+          </div>
         </header>
-        <div class="library-controls">
-          <input id="librarySearch" type="search" placeholder="Notizbücher durchsuchen …" aria-label="Notizbücher durchsuchen">
-          <select id="librarySort" aria-label="Sortierung">
-            <option value="updated">Zuletzt bearbeitet</option>
-            <option value="created">Zuletzt erstellt</option>
-            <option value="name">Name A–Z</option>
-            <option value="pages">Meiste Seiten</option>
-          </select>
+        <div class="library-content">
+          <header class="library-header">
+            <div><small>DEIN ARBEITSBEREICH</small><h1 id="libraryHeading">Dokumente</h1></div>
+          </header>
+          <div class="library-toolbar">
+            <div class="library-filter-label"><span>☰</span><span>Alle</span></div>
+            <div class="library-toolbar-actions">
+              <select id="librarySort" aria-label="Sortierung">
+                <option value="updated">Zuletzt bearbeitet</option>
+                <option value="created">Zuletzt erstellt</option>
+                <option value="name">Name A–Z</option>
+                <option value="pages">Meiste Seiten</option>
+              </select>
+              <div class="new-menu-wrap">
+                <button id="newNotebook" class="primary new-menu-trigger" type="button" aria-expanded="false">＋ <span>Neu</span></button>
+                <div id="newMenu" class="new-menu hidden">
+                  <div class="new-menu-grid">
+                    <button type="button" data-create-kind="notebook"><span class="new-tile-icon">▣</span><span>Notizbuch</span></button>
+                    <button type="button" data-create-kind="whiteboard"><span class="new-tile-icon">▦</span><span>Whiteboard</span><em>NEU</em></button>
+                    <button type="button" data-create-kind="text"><span class="new-tile-icon">▤</span><span>Textdokument</span><em>NEU</em></button>
+                  </div>
+                  <div class="new-menu-grid secondary">
+                    <button type="button" data-create-kind="import"><span class="new-tile-icon">⇩</span><span>Importieren</span></button>
+                    <button type="button" data-create-kind="quick"><span class="new-tile-icon">✎</span><span>Schnellnotiz</span></button>
+                  </div>
+                  <div class="new-menu-list">
+                    <button type="button" data-create-kind="quick"><span>▧</span> Bild / Scan (bald verfügbar)</button>
+                    <button type="button" data-create-kind="folder"><span>▱</span> Ordner (bald verfügbar)</button>
+                  </div>
+                </div>
+              </div>
+              <button class="view-toggle active" id="listViewButton" type="button" title="Listenansicht">☷</button>
+            </div>
+          </div>
+          <div id="documentGrid" class="document-grid"></div>
         </div>
-        <div id="documentGrid" class="document-grid"></div>
       </main>
     </section>
 

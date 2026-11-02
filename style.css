@@ -1005,3 +1005,44 @@ button:disabled{cursor:not-allowed;opacity:.48}
   .overview-card{padding:9px 7px}
   .overview-card span:last-child{white-space:normal;line-height:1.25}
 }
+
+
+/* Continue-working panel */
+.resume-panel{
+  display:flex;align-items:center;gap:20px;min-height:132px;margin:0 0 24px;padding:19px 22px;
+  overflow:hidden;position:relative;border:1px solid rgba(66,145,181,.27);border-radius:16px;
+  background:radial-gradient(ellipse at 10% 0%,rgba(41,140,187,.2),transparent 58%),linear-gradient(110deg,#192a33,#151e23 68%);
+  box-shadow:0 9px 28px rgba(0,0,0,.13);
+}
+.resume-panel[hidden]{display:none}
+.resume-art{
+  width:74px;height:86px;flex:0 0 74px;position:relative;display:grid;place-items:center;
+  border:1px solid rgba(133,203,236,.3);border-radius:10px;background:linear-gradient(145deg,#f5f8fa,#dce8ee);
+  box-shadow:0 8px 18px rgba(0,0,0,.22);transform:rotate(-4deg);
+}
+.resume-art span{color:#1685bd;font-size:30px;z-index:1}
+.resume-art i{position:absolute;left:15px;right:12px;height:1px;background:#c4d6df}
+.resume-art i:nth-of-type(1){top:25px}.resume-art i:nth-of-type(2){top:42px}.resume-art i:nth-of-type(3){top:59px}
+.resume-copy{display:grid;gap:5px;min-width:0;flex:1}
+.resume-copy small{color:#79c7ed;font-size:9px;font-weight:800;letter-spacing:1.35px}
+.resume-copy strong{overflow:hidden;color:#f3f8fa;font-size:17px;font-weight:680;text-overflow:ellipsis;white-space:nowrap}
+.resume-copy>span{color:#a2b2bb;font-size:11px}
+.resume-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.resume-actions button{min-height:38px;padding:0 14px;border-radius:9px;font:inherit;font-size:11px;font-weight:650;cursor:pointer;transition:transform .16s ease,background .16s ease,border-color .16s ease}
+.resume-open{border:1px solid #299bd4;background:linear-gradient(135deg,#168fc9,#0875ad);color:#fff;box-shadow:0 5px 14px rgba(0,119,177,.18)}
+.resume-open:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.08)}
+.resume-open:disabled{opacity:.45;cursor:not-allowed}
+.resume-create{border:1px solid #3b505b;background:rgba(255,255,255,.035);color:#d6e2e8}
+.resume-create:hover{background:rgba(255,255,255,.09);border-color:#587585}
+@media(max-width:760px){
+ .resume-panel{gap:14px;padding:15px;flex-wrap:wrap}
+ .resume-art{width:57px;height:68px;flex-basis:57px}
+ .resume-art span{font-size:25px}
+ .resume-actions{width:100%;padding-left:71px}
+}
+@media(max-width:430px){
+ .resume-panel{gap:11px}
+ .resume-copy strong{font-size:14px}
+ .resume-actions{padding-left:0}
+ .resume-actions button{flex:1;padding:0 8px}
+}

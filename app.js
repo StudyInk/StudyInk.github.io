@@ -708,6 +708,19 @@ function setupLibraryManager() {
       }
     });
   }
+  const resumeOpen = document.getElementById("resumeOpen");
+  if (resumeOpen) resumeOpen.addEventListener("click", () => {
+    const latest = notebooks.filter(book => !book.deletedAt).sort((a,b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")))[0];
+    if (!latest) return;
+    activeNotebook = latest;
+    activePageIndex = Math.max(0, Math.min(latest.currentPage || 0, (latest.pages?.length || 1) - 1));
+    showNotebook();
+    renderAll();
+    saveNotebooks();
+  });
+  const resumeCreate = document.getElementById("resumeCreate");
+  if (resumeCreate) resumeCreate.addEventListener("click", () => createNotebook("Neues Notizbuch"));
+
   const notice = document.getElementById("libraryNotice");
   if (notice) notice.addEventListener("click", () => showToast("Alles auf dem neuesten Stand."));
   const settings = document.getElementById("librarySettings");
@@ -731,6 +744,17 @@ function renderLibrary() {
   if (overviewBooks) overviewBooks.textContent = overview.books.toLocaleString("de-DE");
   if (overviewFavorites) overviewFavorites.textContent = overview.favorites.toLocaleString("de-DE");
   if (overviewPages) overviewPages.textContent = overview.pages.toLocaleString("de-DE");
+  const resumePanel = document.getElementById("resumePanel");
+  const resumeTitle = document.getElementById("resumeTitle");
+  const resumeMeta = document.getElementById("resumeMeta");
+  const latestBook = activeBooks.slice().sort((a,b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")))[0];
+  if (resumePanel) resumePanel.hidden = libraryViewMode !== "documents";
+  if (resumeTitle) resumeTitle.textContent = latestBook ? (latestBook.name || "Unbenanntes Notizbuch") : "Noch keine Notizbücher";
+  if (resumeMeta) resumeMeta.textContent = latestBook
+    ? `${latestBook.pages?.length || 0} Seiten · ${latestBook.updatedAt ? new Date(latestBook.updatedAt).toLocaleDateString("de-DE") : "Noch nicht bearbeitet"}`
+    : "Erstelle dein erstes Notizbuch und starte direkt.";
+  const resumeOpen = document.getElementById("resumeOpen");
+  if (resumeOpen) resumeOpen.disabled = !latestBook;
   const query = (document.getElementById("librarySearch")?.value || "").trim().toLocaleLowerCase("de");
   const sortMode = document.getElementById("librarySort")?.value || "updated";
   let visible = notebooks.filter(book => {

@@ -473,3 +473,55 @@ button:disabled{opacity:.45;cursor:not-allowed}
  .new-menu-list button{min-height:49px;padding:0 14px;font-size:12px}
  .main-search input{width:75px}
 }
+
+
+/* =========================================================
+   STUDYINK MOTION & INTERACTION POLISH
+========================================================= */
+@keyframes si-fade-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes si-pop{from{opacity:0;transform:translateY(9px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes si-soft-in{from{opacity:0}to{opacity:1}}
+@keyframes si-nav-in{from{opacity:.65;transform:translateX(-5px)}to{opacity:1;transform:translateX(0)}}
+.library-content{animation:si-fade-up .42s cubic-bezier(.2,.7,.2,1) both}
+.library-top-actions{animation:si-soft-in .5s ease both}
+.library-nav .nav{transition:background .2s ease,color .2s ease,transform .2s ease}
+.library-nav .nav:active{transform:scale(.975)}
+.library-nav .nav.active{animation:si-nav-in .22s ease both}
+.document-card{animation:si-fade-up .38s cubic-bezier(.2,.7,.2,1) both;transition:background .2s ease,border-color .2s ease,transform .2s ease}
+.document-card:nth-child(1){animation-delay:0ms}
+.document-card:nth-child(2){animation-delay:35ms}
+.document-card:nth-child(3){animation-delay:70ms}
+.document-card:nth-child(4){animation-delay:105ms}
+.document-card:nth-child(5){animation-delay:140ms}
+.document-card:nth-child(n+6){animation-delay:175ms}
+.document-preview{transition:transform .25s ease,box-shadow .25s ease}
+.document-card:hover .document-preview{transform:translateY(-2px) scale(1.035);box-shadow:0 6px 15px rgba(0,0,0,.22)}
+.new-menu{transform-origin:top right;animation:si-pop .2s cubic-bezier(.2,.8,.2,1) both}
+.new-menu-grid button{transition:background .18s ease,transform .18s ease,box-shadow .18s ease}
+.new-menu-grid button:active{transform:scale(.97)}
+.new-menu-grid button:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.primary.new-menu-trigger{transition:transform .18s ease,background .18s ease,box-shadow .18s ease}
+.primary.new-menu-trigger:active{transform:scale(.96)}
+.round-top-action{transition:background .18s ease,transform .18s ease}
+.round-top-action:active{transform:scale(.91)}
+.library-search input:focus-visible,.main-search:focus-within{outline:2px solid #168bd2;outline-offset:3px;border-radius:8px}
+.document-grid.grid-mode{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:13px;align-items:stretch}
+.document-grid.grid-mode .document-card{min-height:205px;grid-template-columns:1fr;grid-template-rows:112px auto auto 1fr;gap:7px;padding:12px;border:1px solid #30373a;border-radius:15px;background:#14191b}
+.document-grid.grid-mode .document-card:hover{transform:translateY(-3px);background:#1b2225;border-color:#465158}
+.document-grid.grid-mode .document-preview{width:100%;height:112px;border-radius:9px}
+.document-grid.grid-mode .document-actions{position:absolute;right:17px;bottom:16px}
+.document-grid.grid-mode .document-card{position:relative;padding-bottom:53px}
+.document-grid.grid-mode .document-title{align-self:end}
+.view-toggle{transition:color .18s ease,background .18s ease,transform .18s ease}
+.view-toggle:active{transform:scale(.92)}
+.notebook-view:not(.hidden){animation:si-soft-in .24s ease both}
+.library-view:not(.hidden){animation:si-soft-in .24s ease both}
+button:focus-visible,.nav:focus-visible,.document-card:focus-visible{outline:2px solid #168bd2;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
+@media(max-width:650px){
+ .document-grid.grid-mode{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .document-grid.grid-mode .document-card{min-height:185px;padding:9px 9px 49px}
+ .document-grid.grid-mode .document-preview{height:95px}
+}

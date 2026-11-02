@@ -141,3 +141,17 @@ button,input,textarea{font:inherit}button{border:0}.hidden{display:none!importan
   .pen-palette button { flex: 0 0 32px; width: 32px; }
   .library-header .primary { width: 100%; }
 }
+
+
+/* Library manager: search, sorting and document actions */
+.library-controls{display:flex;gap:10px;margin:0 0 20px;max-width:680px}
+.library-controls input,.library-controls select{min-height:42px;padding:9px 12px;border:1px solid #dce2e9;border-radius:9px;background:#fff;color:#273140;outline:none}
+.library-controls input{flex:1;min-width:0}
+.library-controls input:focus,.library-controls select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,128,237,.12)}
+.document-card{overflow:hidden}
+.document-actions{display:flex;gap:6px;margin-top:10px;opacity:.78}
+.document-actions button{width:32px;height:30px;border:1px solid #e5e9ef;border-radius:7px;background:#f8fafc;color:#566273;cursor:pointer}
+.document-actions button:hover{background:#edf4ff;color:var(--blue);border-color:#cfe1fb}
+.library-empty{grid-column:1/-1;padding:30px 18px;border:1px dashed #cfd7e1;border-radius:12px;color:#758091;background:rgba(255,255,255,.55);text-align:center}
+.nav.active{font-weight:700}
+@media(max-width:800px){.library-controls{flex-direction:column}.document-actions{opacity:1}}

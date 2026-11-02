@@ -88,7 +88,7 @@
   }
 
   function duplicatePage() {
-    if (!window.activeNotebook || typeof getCurrentPage !== "function") return;
+    if (typeof activeNotebook === "undefined" || !activeNotebook || typeof getCurrentPage !== "function") return;
     const source = getCurrentPage();
     if (!source) return;
 
@@ -108,7 +108,7 @@
   }
 
   function deletePage() {
-    if (!window.activeNotebook || activeNotebook.pages.length <= 1) {
+    if (typeof activeNotebook === "undefined" || !activeNotebook || activeNotebook.pages.length <= 1) {
       toast("Das letzte Blatt kann nicht gelöscht werden");
       return;
     }
@@ -126,7 +126,7 @@
   }
 
   function exportBackup() {
-    if (!window.activeNotebook) return;
+    if (typeof activeNotebook === "undefined" || !activeNotebook) return;
     const payload = {
       format: "StudyInk Backup",
       version: 2,
@@ -217,6 +217,7 @@
   function start() {
     loadPrefs();
     addSystemUI();
+    document.documentElement.dataset.studyinkTheme = prefs.theme === "soft-dark" ? "soft-dark" : "light";
     setZoom(zoomValue);
     document.addEventListener("keydown", keyboardEnhancements);
   }

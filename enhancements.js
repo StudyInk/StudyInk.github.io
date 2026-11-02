@@ -35,6 +35,7 @@
       <button data-system="delete">⌫ <span>Seite löschen</span></button>
       <button data-system="pdf-import">▤ <span>PDF importieren</span></button>
       <button data-system="pdf-export">▧ <span>Als PDF exportieren</span></button>
+      <button data-system="auto-restore">⟲ <span>Automatisches Backup wiederherstellen</span></button>
       <button data-system="export">⇩ <span>Notizbuch sichern</span></button>
       <button data-system="import">⇧ <span>Backup wiederherstellen</span></button>
       <button data-system="theme">◐ <span>Arbeitsbereich wechseln</span></button>
@@ -86,6 +87,7 @@
     if (action === "delete") deletePage();
     if (action === "pdf-import") { $("studyInkPdfInput").click(); return; }
     if (action === "pdf-export") { exportPdf(); $("systemPanel").classList.add("hidden"); return; }
+    if (action === "auto-restore") { restoreAutomaticBackup(); $("systemPanel").classList.add("hidden"); return; }
     if (action === "export") exportBackup();
     if (action === "import") $("systemImportInput").click();
     if (action === "theme") toggleTheme();
@@ -243,8 +245,10 @@
       const ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,900,1165);
       const finish=()=>{
         (page.strokes||[]).forEach(stroke=>{
-          if(!stroke.points||!stroke.points.length||stroke.tool==="eraser")return;
-          ctx.save();ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle=stroke.color||"#111";
+          if(!stroke.points||!stroke.points.length)return;
+          ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
+          ctx.globalCompositeOperation=stroke.tool==="eraser"?"destination-out":"source-over";
+          ctx.strokeStyle=stroke.color||"#111";
           ctx.fillStyle=stroke.color||"#111";ctx.globalAlpha=stroke.opacity==null?1:stroke.opacity;
           ctx.lineWidth=(stroke.size||2)*(stroke.tool==="highlighter"?4:1);
           if(stroke.points.length===1){const p=stroke.points[0];ctx.beginPath();ctx.arc(p.x,p.y,ctx.lineWidth/2,0,Math.PI*2);ctx.fill();}
@@ -268,11 +272,70 @@
       win.document.close();toast("Druckdialog öffnen und „Als PDF speichern“ wählen");
     }).catch(error=>{win.close();console.error(error);toast("PDF-Export fehlgeschlagen");});
   }
-  function runAutomaticBackup() {
+  function openBackupDatabase() {
+    return new Promise((resolve,reject) => {
+      if (!("indexedDB" in window)) return reject(new Error("IndexedDB wird nicht unterstützt"));
+      const request = indexedDB.open("StudyInkBackups", 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains("snapshots")) {
+          request.result.createObjectStore("snapshots");
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("Backup-Speicher nicht verfügbar"));
+    });
+  }
+
+  async function runAutomaticBackup() {
     try {
-      if(typeof notebooks==="undefined"||!Array.isArray(notebooks)||!notebooks.length)return;
-      localStorage.setItem("studyink_autobackup_v1",JSON.stringify({savedAt:new Date().toISOString(),notebooks:notebooks}));
-    } catch(error){console.warn("StudyInk automatic backup:",error);toast("Automatisches Backup nicht möglich – Speicherplatz prüfen");}
+      if (typeof notebooks === "undefined" || !Array.isArray(notebooks) || !notebooks.length) return;
+      const db = await openBackupDatabase();
+      await new Promise((resolve,reject) => {
+        const tx = db.transaction("snapshots","readwrite");
+        tx.objectStore("snapshots").put({
+          savedAt: new Date().toISOString(),
+          notebooks: JSON.parse(JSON.stringify(notebooks))
+        }, "latest");
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error || new Error("Backup fehlgeschlagen"));
+      });
+      db.close();
+    } catch(error) {
+      console.warn("StudyInk automatic backup:", error);
+      if (!runAutomaticBackup.warned) {
+        runAutomaticBackup.warned = true;
+        toast("Automatisches Backup nicht verfügbar");
+      }
+    }
+  }
+
+  async function restoreAutomaticBackup() {
+    try {
+      const db = await openBackupDatabase();
+      const snapshot = await new Promise((resolve,reject) => {
+        const tx = db.transaction("snapshots","readonly");
+        const request = tx.objectStore("snapshots").get("latest");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      if (!snapshot || !Array.isArray(snapshot.notebooks) || !snapshot.notebooks.length) {
+        toast("Noch kein automatisches Backup vorhanden");
+        return;
+      }
+      if (!confirm("Automatisches Backup vom " + new Date(snapshot.savedAt).toLocaleString() +
+        " wiederherstellen? Deine aktuelle Notizbuchliste wird ersetzt.")) return;
+      notebooks = snapshot.notebooks;
+      activeNotebook = notebooks[0];
+      activePageIndex = Math.max(0, Math.min(activeNotebook.currentPage || 0, activeNotebook.pages.length - 1));
+      saveNotebooks();
+      showNotebook();
+      renderAll();
+      toast("Automatisches Backup wiederhergestellt");
+    } catch(error) {
+      console.error("StudyInk backup restore:", error);
+      toast("Backup konnte nicht wiederhergestellt werden");
+    }
   }
 
   function setZoom(value) {

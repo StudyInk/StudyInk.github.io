@@ -719,6 +719,18 @@ function setupLibraryManager() {
 function renderLibrary() {
   if (!documentGrid) return;
   documentGrid.innerHTML = "";
+  const activeBooks = notebooks.filter(book => !book.deletedAt);
+  const overview = {
+    books: activeBooks.length,
+    favorites: activeBooks.filter(book => book.favorite).length,
+    pages: activeBooks.reduce((sum, book) => sum + (Array.isArray(book.pages) ? book.pages.length : 0), 0)
+  };
+  const overviewBooks = document.getElementById("overviewBooks");
+  const overviewFavorites = document.getElementById("overviewFavorites");
+  const overviewPages = document.getElementById("overviewPages");
+  if (overviewBooks) overviewBooks.textContent = overview.books.toLocaleString("de-DE");
+  if (overviewFavorites) overviewFavorites.textContent = overview.favorites.toLocaleString("de-DE");
+  if (overviewPages) overviewPages.textContent = overview.pages.toLocaleString("de-DE");
   const query = (document.getElementById("librarySearch")?.value || "").trim().toLocaleLowerCase("de");
   const sortMode = document.getElementById("librarySort")?.value || "updated";
   let visible = notebooks.filter(book => {

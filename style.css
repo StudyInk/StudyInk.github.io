@@ -87,3 +87,57 @@ button,input,textarea{font:inherit}button{border:0}.hidden{display:none!importan
 :root[data-studyink-theme="soft-dark"] .system-panel{background:#20252b;color:#eef2f6;border-color:#343b43}
 :root[data-studyink-theme="soft-dark"] .system-panel button{color:#dce3e9}
 :root[data-studyink-theme="soft-dark"] .system-panel button:hover{background:#2c353f;color:#70aaff}
+
+
+/* Responsive paper sizing: preserve the page ratio on phones and tablets. */
+.paper {
+  width: min(900px, calc((100vh - 150px) * 0.7725), calc(100vw - 40px));
+  height: auto;
+  aspect-ratio: 900 / 1165;
+}
+.paper-stage {
+  min-width: 0;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+#canvas {
+  touch-action: none;
+}
+@media (max-width: 800px) {
+  .paper-stage { padding: 52px 12px 88px; }
+  .paper {
+    width: min(620px, calc((100vh - 150px) * 0.7725), calc(100vw - 24px));
+  }
+  .library-view { flex-direction: column; }
+  .library-sidebar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { padding: 6px 10px; font-size: 20px; }
+  .nav { width: auto; min-width: 0; margin: 0; padding: 0 9px; }
+  .library-main { min-height: 0; padding: 22px 16px; }
+  .library-header { gap: 12px; flex-wrap: wrap; }
+  .library-header h1 { font-size: 25px; }
+  .document-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .document-card { min-height: 195px; }
+  .document-preview { height: 125px; }
+  .topbar { gap: 4px; }
+  .top-tools { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .top-tools::-webkit-scrollbar { display: none; }
+  .top-tools .top-button { flex: 0 0 34px; }
+  .pen-palette { max-width: calc(100vw - 16px); }
+}
+@media (max-width: 420px) {
+  .brand { font-size: 18px; }
+  .nav { gap: 5px; font-size: 12px; padding: 0 7px; }
+  .book-name { max-width: 125px; }
+  #bookTitle { max-width: 95px; }
+  .top-button { width: 32px; }
+  .pen-palette button { flex: 0 0 32px; width: 32px; }
+  .library-header .primary { width: 100%; }
+}

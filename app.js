@@ -192,7 +192,7 @@ function init() {
     activeNotebook.currentPage || 0
   );
 
-  showNotebook();
+  showLibrary();
 
   renderAll();
 
@@ -634,7 +634,7 @@ function setupLibraryManager() {
       libraryViewMode = button.dataset.libraryView;
       document.querySelectorAll("[data-library-view]").forEach(item => item.classList.toggle("active", item === button));
       const heading = document.getElementById("libraryHeading");
-      if (heading) heading.textContent = ({documents:"Meine Notizen",favorites:"Favoriten",shared:"Geteilt",trash:"Papierkorb"})[libraryViewMode];
+      if (heading) heading.textContent = ({documents:"Dokumente",favorites:"Favoriten",shared:"Geteilt",trash:"Papierkorb"})[libraryViewMode];
       renderLibrary();
     });
   });
@@ -642,6 +642,42 @@ function setupLibraryManager() {
   const sort = document.getElementById("librarySort");
   if (search) search.addEventListener("input", renderLibrary);
   if (sort) sort.addEventListener("change", renderLibrary);
+  const newButton = document.getElementById("newNotebook");
+  const newMenu = document.getElementById("newMenu");
+  if (newButton && newMenu) {
+    newButton.addEventListener("click", event => {
+      event.stopPropagation();
+      const opening = newMenu.classList.contains("hidden");
+      newMenu.classList.toggle("hidden", !opening);
+      newButton.setAttribute("aria-expanded", String(opening));
+    });
+    newMenu.addEventListener("click", event => {
+      const item = event.target.closest("[data-create-kind]");
+      if (!item) return;
+      const kind = item.dataset.createKind;
+      newMenu.classList.add("hidden");
+      newButton.setAttribute("aria-expanded", "false");
+      if (kind === "notebook") createNotebook("Neues Notizbuch");
+      else if (kind === "whiteboard") createNotebook("Neues Whiteboard");
+      else if (kind === "text") createNotebook("Neues Textdokument");
+      else if (kind === "quick") createNotebook("Schnellnotiz");
+      else if (kind === "import") {
+        showToast("Öffne zuerst ein Notizbuch und nutze Mehr → PDF importieren oder Backup wiederherstellen.");
+      } else if (kind === "folder") showToast("Ordnerverwaltung ist noch nicht verfügbar.");
+    });
+    document.addEventListener("click", event => {
+      if (!newMenu.contains(event.target) && event.target !== newButton) {
+        newMenu.classList.add("hidden");
+        newButton.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+  const notice = document.getElementById("libraryNotice");
+  if (notice) notice.addEventListener("click", () => showToast("Alles auf dem neuesten Stand."));
+  const settings = document.getElementById("librarySettings");
+  if (settings) settings.addEventListener("click", () => showToast("Ansicht: dunkles StudyInk-Design"));
+  const collapse = document.querySelector(".sidebar-collapse");
+  if (collapse) collapse.addEventListener("click", () => document.getElementById("libraryView").classList.toggle("sidebar-collapsed"));
 }
 
 function renderLibrary() {

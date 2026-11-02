@@ -980,10 +980,16 @@ function handlePointerDown(event) {
   }
 
 
-  if (
-    currentTool === "lasso"
-  ) {
-
+  if (currentTool === "lasso") {
+    const point = getCanvasPosition(event), page = getCurrentPage();
+    const hitStroke = page && selectedStrokeIndexes.some(index =>
+      page.strokes[index] && page.strokes[index].points.some(p => Math.hypot(p.x-point.x,p.y-point.y)<18));
+    const hitText = page && selectedTextIds.some(id => {
+      const note = page.texts.find(item => item.id === id);
+      return note && point.x >= note.x-8 && point.x <= note.x+260 && point.y >= note.y-28 && point.y <= note.y+8;
+    });
+    if (hitStroke || hitText) { selectionDragStart = point; canvas.setPointerCapture(event.pointerId); }
+    else startLasso(event);
     return;
   }
 
@@ -1037,6 +1043,17 @@ function handlePointerDown(event) {
 
 function handlePointerMove(event) {
 
+  if (selectionDragStart) {
+    event.preventDefault();
+    const point = getCanvasPosition(event);
+    const dx = point.x-selectionDragStart.x, dy = point.y-selectionDragStart.y;
+    if (dx || dy) { moveSelection(dx,dy); selectionDragStart = point; }
+    return;
+  }
+  if (lassoSelecting) {
+    event.preventDefault(); lassoPoints.push(getCanvasPosition(event));
+    redrawCanvas(); drawLassoPreview(); return;
+  }
   if (!isDrawing) {
     return;
   }
@@ -1057,6 +1074,8 @@ function handlePointerMove(event) {
 
 function handlePointerUp(event) {
 
+  if (selectionDragStart) { selectionDragStart = null; return; }
+  if (lassoSelecting) { finishLasso(); return; }
   if (!isDrawing) {
     return;
   }
@@ -1103,6 +1122,78 @@ function handlePointerLeave() {
 
 }
 
+
+
+/* Lasso selection and editing */
+let lassoSelecting = false;
+let lassoPoints = [];
+let selectedStrokeIndexes = [];
+let selectedTextIds = [];
+let selectionDragStart = null;
+
+function startLasso(event) {
+  event.preventDefault();
+  canvas.setPointerCapture(event.pointerId);
+  lassoSelecting = true;
+  lassoPoints = [getCanvasPosition(event)];
+}
+function pointInPolygon(point, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const a = polygon[i], b = polygon[j];
+    if (((a.y > point.y) !== (b.y > point.y)) &&
+      point.x < (b.x - a.x) * (point.y - a.y) / ((b.y - a.y) || 0.00001) + a.x) inside = !inside;
+  }
+  return inside;
+}
+function drawLassoPreview() {
+  if (lassoPoints.length < 2) return;
+  const ctx = canvas.getContext("2d");
+  ctx.save();
+  ctx.setTransform(DEVICE_PIXEL_RATIO, 0, 0, DEVICE_PIXEL_RATIO, 0, 0);
+  ctx.strokeStyle = "#2878e5"; ctx.fillStyle = "rgba(40,120,229,.08)";
+  ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.beginPath();
+  ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+  lassoPoints.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+}
+function finishLasso() {
+  lassoSelecting = false;
+  const page = getCurrentPage();
+  if (!page || lassoPoints.length < 3) { redrawCanvas(); return; }
+  selectedStrokeIndexes = page.strokes.map((stroke, index) => ({stroke,index}))
+    .filter(item => item.stroke.points && item.stroke.points.some(p => pointInPolygon(p, lassoPoints)))
+    .map(item => item.index);
+  selectedTextIds = page.texts.filter(note => pointInPolygon({x:note.x,y:note.y}, lassoPoints)).map(note => note.id);
+  lassoPoints = []; redrawCanvas(); renderTextLayer();
+  showToast(selectedStrokeIndexes.length || selectedTextIds.length
+    ? "Auswahl: Ziehen zum Verschieben, Entf zum Löschen" : "Keine Elemente ausgewählt");
+}
+function moveSelection(dx, dy) {
+  const page = getCurrentPage(); if (!page) return;
+  const before = JSON.stringify({strokes:page.strokes,texts:page.texts});
+  selectedStrokeIndexes.forEach(index => {
+    const stroke = page.strokes[index];
+    if (stroke) stroke.points.forEach(p => {p.x += dx; p.y += dy;});
+  });
+  selectedTextIds.forEach(id => {
+    const note = page.texts.find(item => item.id === id);
+    if (note) {note.x += dx; note.y += dy;}
+  });
+  undoStack.push(before); redoStack = []; updateHistoryButtons();
+  renderTextLayer(); redrawCanvas(); scheduleSave();
+}
+function deleteSelection() {
+  const page = getCurrentPage();
+  if (!page || (!selectedStrokeIndexes.length && !selectedTextIds.length)) return false;
+  const before = JSON.stringify({strokes:page.strokes,texts:page.texts});
+  const indexes = new Set(selectedStrokeIndexes), ids = new Set(selectedTextIds);
+  page.strokes = page.strokes.filter((_, index) => !indexes.has(index));
+  page.texts = page.texts.filter(note => !ids.has(note.id));
+  selectedStrokeIndexes = []; selectedTextIds = [];
+  undoStack.push(before); redoStack = []; updateHistoryButtons();
+  renderTextLayer(); redrawCanvas(); scheduleSave(); showToast("Auswahl gelöscht"); return true;
+}
 
 /* =========================================================
    DRAW CURRENT STROKE
@@ -1262,9 +1353,22 @@ function redrawCanvas() {
   }
 
 
-  page.strokes.forEach(
-    stroke => drawStroke(stroke)
-  );
+  if (page.backgroundDataUrl) {
+    const background = new Image();
+    background.onload = () => {
+      if (getCurrentPage() === page) {
+        const context = canvas.getContext("2d");
+        context.save();
+        context.setTransform(DEVICE_PIXEL_RATIO, 0, 0, DEVICE_PIXEL_RATIO, 0, 0);
+        context.drawImage(background, 0, 0, PAPER_WIDTH, PAPER_HEIGHT);
+        context.restore();
+        page.strokes.forEach(stroke => drawStroke(stroke));
+      }
+    };
+    background.src = page.backgroundDataUrl;
+  } else {
+    page.strokes.forEach(stroke => drawStroke(stroke));
+  }
 
 }
 
@@ -1485,15 +1589,7 @@ function setTool(tool) {
   }
 
 
-  if (
-    tool === "lasso"
-  ) {
-
-    showToast(
-      "Lasso: Auswahlfunktion folgt"
-    );
-
-  }
+  if (tool === "lasso") showToast("Lasso: Elemente einkreisen und auswählen");
 
 
   if (
@@ -2472,7 +2568,11 @@ function showToast(message) {
 ========================================================= */
 
 function handleKeyboard(event) {
-
+  if ((event.key === "Delete" || event.key === "Backspace") &&
+      !["INPUT","TEXTAREA"].includes(event.target?.tagName) &&
+      (selectedStrokeIndexes.length || selectedTextIds.length)) {
+    event.preventDefault(); deleteSelection(); return;
+  }
   const modifier =
     event.ctrlKey ||
     event.metaKey;

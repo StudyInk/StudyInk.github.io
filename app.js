@@ -990,7 +990,11 @@ function handlePointerDown(event) {
       const note = page.texts.find(item => item.id === id);
       return note && point.x >= note.x-8 && point.x <= note.x+260 && point.y >= note.y-28 && point.y <= note.y+8;
     });
-    if (hitStroke || hitText) { selectionDragStart = point; canvas.setPointerCapture(event.pointerId); }
+    if (hitStroke || hitText) {
+      selectionDragStart = point;
+      selectionDragSnapshot = JSON.stringify({strokes:page.strokes,texts:page.texts});
+      canvas.setPointerCapture(event.pointerId);
+    }
     else startLasso(event);
     return;
   }
@@ -1076,7 +1080,17 @@ function handlePointerMove(event) {
 
 function handlePointerUp(event) {
 
-  if (selectionDragStart) { selectionDragStart = null; return; }
+  if (selectionDragStart) {
+    selectionDragStart = null;
+    if (selectionDragSnapshot) {
+      undoStack.push(selectionDragSnapshot);
+      redoStack = [];
+      updateHistoryButtons();
+      scheduleSave();
+    }
+    selectionDragSnapshot = null;
+    return;
+  }
   if (lassoSelecting) { finishLasso(); return; }
   if (!isDrawing) {
     return;
@@ -1132,6 +1146,7 @@ let lassoPoints = [];
 let selectedStrokeIndexes = [];
 let selectedTextIds = [];
 let selectionDragStart = null;
+let selectionDragSnapshot = null;
 
 function startLasso(event) {
   event.preventDefault();
@@ -1182,8 +1197,7 @@ function moveSelection(dx, dy) {
     const note = page.texts.find(item => item.id === id);
     if (note) {note.x += dx; note.y += dy;}
   });
-  undoStack.push(before); redoStack = []; updateHistoryButtons();
-  renderTextLayer(); redrawCanvas(); scheduleSave();
+  renderTextLayer(); redrawCanvas();
 }
 function deleteSelection() {
   const page = getCurrentPage();
